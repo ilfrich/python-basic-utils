@@ -14,12 +14,18 @@ make local-install
 
 ## Usage
 
-Simply import the class / module you need:
+If you have a requirement.txt file, you can add `python-basic-utils`:
+
+```bash
+python-basic-utils==0.1.0
+```
+
+Then, simply import the class / module you need:
 
 ```python
 from pbu.data import JSON
 
-# start using it
+# and start using it
 obj = JSON({"my": {"obj": "content"}})
 print(obj.my.obj)
 ```
