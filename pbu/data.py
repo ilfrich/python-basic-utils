@@ -9,18 +9,18 @@ class JSON(dict):
     >>> from pbu.data import JSON
     >>> my_obj = JSON({"initial": "content"})
     >>> print(my_obj.initial)
-    prints out "content"
+    content
 
     >>> my_obj.initial = {"a": 5, "b": 3}
     >>> print(my_obj.initial.a + my_obj.initial.b)
-    prints out 8
+    8
     >>> my_obj.initial.b = 13
     >>> print(my_obj.initial.a + my_obj.initial.b)
-    prints out 18
+    18
 
     >>> my_obj.extension = 10
     >>> print(my_obj.extension)
-    prints out 10
+    10
 
     """
     def __init__(self, data=None):
