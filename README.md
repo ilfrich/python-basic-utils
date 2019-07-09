@@ -2,7 +2,7 @@
 
 ## Installation
 
-Simply run:
+Until I find a repository for this package and an easy way to access it, simply clone the repository and run:
 
 ```bash
 make local-install
@@ -36,7 +36,7 @@ print(obj.my.obj)
 
 This is an adaptation of the native `dict` class, providing Javascript-like dictionary access using the "dot-notation" 
 (e.g. `person.relations[0].address.street`) rather than the Python-native bracket notation (e.g. 
-`person["relations"][0]["address"]["street"]`). It overrides the basic `__getattr__` and `__setattr__` methods to as a 
+`person["relations"][0]["address"]["street"]`). It overrides the basic `__getattr__` and `__setattr__` methods as a 
 shortcut to manage the dictionary content.
 
 **Example**
