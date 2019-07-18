@@ -23,6 +23,13 @@ make local-install
 
 > _The Makefile assumes you run pip via the `pip3` command_
 
+If you have Artifactory (https://na.artifactory.swg-devops.com/artifactory/api/pypi/aur-python-local) access, you can 
+also directly install it using:
+
+```bash
+sudo pip3 install python-basic-utils
+```
+
 ## Usage
 
 If you have a requirement.txt file, you can add `python-basic-utils`:
@@ -53,7 +60,7 @@ shortcut to manage the dictionary content.
 **Example**
 
 ```python
-from pbu.data import JSON
+from pbu import JSON
 my_obj = JSON({"initial": "content"})
 print(my_obj.initial)
 # prints out "content"
