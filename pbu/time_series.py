@@ -44,70 +44,6 @@ class TimeSeries:
         if self.type is not None:
             self.set_resolution()
 
-    def _check_input_data(self):
-        """
-        Helper method to determine the type of the input data and the extract the keys.
-        :return: a tuple containing (1) the type of the input data and (2) the keys contained in the input data.
-        """
-        if self.data is None or self.date_time_key is None:
-            # no association between input data and date_time
-            return None, []
-
-        if type(self.data) == dict and self.date_time_key in self.data:
-            # dictionary of data series, including other keys
-            result = []
-            for key in self.data:
-                if key != self.date_time_key:
-                    result.append(key)
-            return TimeSeries.TYPE_DICT_OF_LISTS, result
-
-        if type(self.data) == list and len(self.data) > 0 and type(self.data[0]) == dict:
-            # list of dictionaries
-            result = []
-            for key in self.data[0]:
-                if key != self.date_time_key:
-                    result.append(key)
-            return TimeSeries.TYPE_LIST_OF_DICTS, result
-
-        raise ValueError("Provided input data structure is not supported. Only a dictionary of lists or a list of "
-                         "dictionaries is allowed. Found type of input_data: {}".format(type(self.data)))
-
-    def _parse_dates(self):
-        """
-        Helper method to parse dates in the date column. If the dates are already dates, no change is performed. It
-        can detect unix timestamps (float or int) and string representation of dates (using the date_format provided in
-        the constructor).
-        The method does not return any result, but rather modifies the data stored in this instance.
-        """
-        dates = self.get_values(self.date_time_key)
-        if type(dates[0]) == datetime:
-            # already in correct format
-            return
-
-        converted_dates = []
-        if type(dates[0]) is float or type(dates[0]) is int:
-            # timestamp
-            for dt in dates:
-                converted_dates.append(datetime.fromtimestamp(dt, tz=self.time_zone))
-        elif type(dates[0]) is str:
-            if self.date_format is None:
-                raise AttributeError("Could not parse dates, because of missing date format.")
-            # datetime string
-            for dt in dates:
-                converted_dates.append(datetime.strptime(dt, self.date_format).astimezone(self.time_zone))
-        else:
-            raise ValueError("Could not parse dates of input data set for type {}".format(type(dates[0])))
-
-        # update existing dates
-        if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
-            self.data[self.date_time_key] = converted_dates
-        else:
-            # translate
-            output = self.translate_to_dict_of_lists()
-            output[self.date_time_key] = converted_dates
-            self.data = TimeSeries(converted_dates, date_time_key=self.date_time_key,
-                                   time_zone=self.time_zone).translate_to_list_of_dicts()
-
     def set_resolution(self, custom_resolution=None):
         """
         Sets the resolution for the time series. If not resolution is provided, it will be detected automatically. The
@@ -375,10 +311,11 @@ class TimeSeries:
             # already in correct format
             self.data = result
 
-    def translate_to_list_of_dicts(self):
+    def translate_to_list_of_dicts(self, date_format=None):
         """
         Returns the data of this instance as a list containing dictionary items with all keys and the datetime key
         being contained in each item of the list.
+        :param date_format: optional date format to render date_time columns as strings rather than native datetime
         :return: a list of dictionaries
         """
         if self.type == TimeSeries.TYPE_LIST_OF_DICTS:
@@ -392,18 +329,24 @@ class TimeSeries:
                 # iterate through all keys for current index and add to result
                 item = {}
                 for key in self.data:
+                    value = self.data[key][index]
+                    if key == self.date_time_key and date_format is not None:
+                        # handle datetime rendering
+                        value = value.strftime(date_format)
                     # add key to current item
-                    item[key] = self.data[key][index]
+                    item[key] = value
                 # append finished item to list of dicts
                 result.append(item)
             # return list of dicts
             return result
 
-    def translate_to_dict_of_lists(self):
+    def translate_to_dict_of_lists(self, date_format=None):
         """
         Returns the data of this instance as a dictionary with keys for each data series, including the date time key.
         Underneath each key, all values (sorted by date time) are stored in a simple list containing the values as
         primitive types.
+        :param date_format: optional date format to render date_time columns as strings rather than native datetime
+        objects
         :return: a dictionary containing lists
         """
         if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
@@ -419,19 +362,27 @@ class TimeSeries:
             # map to lists
             for item in self.data:
                 for key in item:
-                    result[key].append(item[key])
+                    value = item[key]
+                    if key == self.date_time_key and date_format is not None:
+                        # handle datetime rendering
+                        value = value.strftime(date_format)
+                    result[key].append(value)
             # return dict of lists
             return result
 
     @staticmethod
-    def create_date_range(from_date, to_date=datetime.now(), resolution=timedelta(minutes=5)):
+    def create_date_range(from_date, to_date=datetime.now(), resolution=timedelta(minutes=5), include_start_date=False):
         """
         Creates a list of datetime instances in a given resolution an a given time frame.
         :param from_date: the start date for the time series
         :param to_date: the end date for the time series (default: now)
         :param resolution: the resolution for the time series (default 5 minutes)
+        :param include_start_date: boolean flag to indicate whether to add the from date or not (default: False)
         :return: a list of datetime objects matching the provided resolution and from/to date.
         """
+        if not include_start_date:
+            from_date += resolution
+
         if from_date > to_date:
             return [from_date]
 
@@ -442,3 +393,67 @@ class TimeSeries:
             result.append(current_date)
 
         return result
+
+    def _check_input_data(self):
+        """
+        Helper method to determine the type of the input data and the extract the keys.
+        :return: a tuple containing (1) the type of the input data and (2) the keys contained in the input data.
+        """
+        if self.data is None or self.date_time_key is None:
+            # no association between input data and date_time
+            return None, []
+
+        if type(self.data) == dict and self.date_time_key in self.data:
+            # dictionary of data series, including other keys
+            result = []
+            for key in self.data:
+                if key != self.date_time_key:
+                    result.append(key)
+            return TimeSeries.TYPE_DICT_OF_LISTS, result
+
+        if type(self.data) == list and len(self.data) > 0 and type(self.data[0]) == dict:
+            # list of dictionaries
+            result = []
+            for key in self.data[0]:
+                if key != self.date_time_key:
+                    result.append(key)
+            return TimeSeries.TYPE_LIST_OF_DICTS, result
+
+        raise ValueError("Provided input data structure is not supported. Only a dictionary of lists or a list of "
+                         "dictionaries is allowed. Found type of input_data: {}".format(type(self.data)))
+
+    def _parse_dates(self):
+        """
+        Helper method to parse dates in the date column. If the dates are already dates, no change is performed. It
+        can detect unix timestamps (float or int) and string representation of dates (using the date_format provided in
+        the constructor).
+        The method does not return any result, but rather modifies the data stored in this instance.
+        """
+        dates = self.get_values(self.date_time_key)
+        if type(dates[0]) == datetime:
+            # already in correct format
+            return
+
+        converted_dates = []
+        if type(dates[0]) is float or type(dates[0]) is int:
+            # timestamp
+            for dt in dates:
+                converted_dates.append(datetime.fromtimestamp(dt, tz=self.time_zone))
+        elif type(dates[0]) is str:
+            if self.date_format is None:
+                raise AttributeError("Could not parse dates, because of missing date format.")
+            # datetime string
+            for dt in dates:
+                converted_dates.append(datetime.strptime(dt, self.date_format).astimezone(self.time_zone))
+        else:
+            raise ValueError("Could not parse dates of input data set for type {}".format(type(dates[0])))
+
+        # update existing dates
+        if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
+            self.data[self.date_time_key] = converted_dates
+        else:
+            # translate
+            output = self.translate_to_dict_of_lists()
+            output[self.date_time_key] = converted_dates
+            self.data = TimeSeries(converted_dates, date_time_key=self.date_time_key,
+                                   time_zone=self.time_zone).translate_to_list_of_dicts()
