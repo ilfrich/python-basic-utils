@@ -1,5 +1,16 @@
 # Python Basic Utilities `pbu`
 
+**Table of Contents**
+
+1. [Installation](#installation)
+2. [Usage](#usage)
+3. [Classes](#classes)
+    1. [JSON](#json) - a JavaScript-like dictionary access helper
+    2. [Logger](#logger) - a wrapper around the Python logging framework
+    3. [TimeSeries](#timeseries) - powerful helper class to organise time series
+    4. [AbstractMongoStore](#abstractmongostore) - helper and wrapper class for MongoDB access
+    5. [AbstractMysqlStore](#abstractmysqlstore) - helper and wrapper class for MySQL access
+
 ## Installation
 
 Until I find a repository for this package and an easy way to access it, simply clone the repository and run:
