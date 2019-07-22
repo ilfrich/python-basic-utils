@@ -1,4 +1,6 @@
 import math
+from copy import copy
+from pbu import JSON
 from datetime import datetime, timedelta
 
 DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
@@ -203,6 +205,7 @@ class TimeSeries:
 
         for key in time_series.keys:
             self.add_values(key, time_series.get_values(key))
+        _, self.keys = self._check_input_data()
 
     def remove_series(self, keys_to_remove):
         """
@@ -225,6 +228,7 @@ class TimeSeries:
             for key in keys_to_remove:
                 del output[key]
             self.data = TimeSeries(output, self.date_time_key).translate_to_list_of_dicts()
+        _, self.keys = self._check_input_data()
 
     def align_to_resolution(self, resolution=None, start_date=None, end_date=None):
         """
@@ -245,9 +249,9 @@ class TimeSeries:
         tolerance = resolution / 2
 
         # start date (use start date minus resolution to match the first entry perfectly)
-        current_date = self.get_values(self.date_time_key)[0] - resolution
+        current_date = self.get_values(self.date_time_key)[0]
         if start_date is not None:
-            current_date = start_date - resolution
+            current_date = start_date
         if end_date is None:
             end_date = self.get_values(self.date_time_key)[-1]
 
@@ -260,20 +264,28 @@ class TimeSeries:
         prev_value = None
         current_original_data_index = 0
         result = []
-
         # as long as we haven't reached the end date, keep adding values
         while current_date < end_date:
 
+            # ensure we don't run into index errors (repeat last element until end-date in worst-case scenario)
+            if current_original_data_index >= len(original_data):
+                current_original_data_index = len(original_data) - 1
+
             # extract date information and time delta
-            current_date = current_date + resolution
             original_date = original_data[current_original_data_index][self.date_time_key]
             diff_seconds = (current_date - original_date).total_seconds()
 
             # close enough
             if current_date == original_date or abs(diff_seconds) < tolerance.total_seconds():
+                # fetch the value from the original data
                 prev_value = original_data[current_original_data_index]
-                current_original_data_index += 1
+                # update date of this entry to current date
+                prev_value[self.date_time_key] = current_date
+                # add to result
                 result.append(prev_value)
+                # remember to increment the key for next item and add resolution to current date
+                current_original_data_index += 1
+                current_date += resolution
 
             # implies the data point is no where close, skip this entry
             elif current_date > original_date:
@@ -282,7 +294,6 @@ class TimeSeries:
 
             # implies that the next data point is in the future and we need to interpolate missing values
             elif current_date < original_date:
-
                 # compute gaps
                 gaps = {}
                 next_value = original_data[current_original_data_index]
@@ -291,17 +302,18 @@ class TimeSeries:
                 for key in self.keys:
                     gaps[key] = next_value[key] - prev_value[key]
                 missing_entries = math.floor((original_date - current_date) / resolution)
-
                 # interpolate entries starting from prev_value
                 for index in range(0, missing_entries):
                     new_item = {
                         self.date_time_key: prev_value[self.date_time_key] + resolution
                     }
                     for key in self.keys:
-                        new_item[key] = prev_value[key] + gaps[key]
+                        new_item[key] = prev_value[key] + (gaps[key] / missing_entries)
 
                     prev_value = new_item
                     result.append(new_item)
+                current_date = prev_value[self.date_time_key] + resolution
+                current_original_data_index += 1
 
         # store aligned data
         if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
@@ -320,7 +332,12 @@ class TimeSeries:
         """
         if self.type == TimeSeries.TYPE_LIST_OF_DICTS:
             # already in correct format
-            return self.data
+            result = copy(self.data)
+            # format date_time column if necessary
+            if date_format is not None:
+                result = list(map(lambda x: TimeSeries._format_date_list_of_dict(x, self.date_time_key, date_format),
+                                  result))
+            return result
         else:
             # need translation
             result = []
@@ -351,7 +368,11 @@ class TimeSeries:
         """
         if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
             # already in correct format
-            return self.data
+            result = copy(self.data)
+            # format date_time column if necessary
+            if date_format is not None:
+                result[self.date_time_key] = list(map(lambda x: x.strftime(date_format), result[self.date_time_key]))
+            return result
         else:
             # need translation
             result = {}
@@ -371,17 +392,26 @@ class TimeSeries:
             return result
 
     @staticmethod
-    def create_date_range(from_date, to_date=datetime.now(), resolution=timedelta(minutes=5), include_start_date=False):
+    def create_date_range(from_date, to_date=None, num_points=None, resolution=timedelta(minutes=5), include_start_date=False):
         """
         Creates a list of datetime instances in a given resolution an a given time frame.
         :param from_date: the start date for the time series
-        :param to_date: the end date for the time series (default: now)
+        :param to_date: the end date for the time series (default: None)
+        :param num_points: optional: the number of points to add (use only num_points or to_date)
         :param resolution: the resolution for the time series (default 5 minutes)
         :param include_start_date: boolean flag to indicate whether to add the from date or not (default: False)
         :return: a list of datetime objects matching the provided resolution and from/to date.
         """
+        if num_points is not None and to_date is not None:
+            raise AttributeError("Cannot provide to_date and num_points at the same time")
+
+        # optionally offset start date
         if not include_start_date:
             from_date += resolution
+
+        # if num_points are provided, compute end date
+        if num_points is not None:
+            to_date = from_date + (num_points * resolution)
 
         if from_date > to_date:
             return [from_date]
@@ -394,6 +424,11 @@ class TimeSeries:
 
         return result
 
+    @staticmethod
+    def _format_date_list_of_dict(item, date_time_key, date_format):
+        item[date_time_key] = item[date_time_key].strftime(date_format)
+        return item
+
     def _check_input_data(self):
         """
         Helper method to determine the type of the input data and the extract the keys.
@@ -403,7 +438,7 @@ class TimeSeries:
             # no association between input data and date_time
             return None, []
 
-        if type(self.data) == dict and self.date_time_key in self.data:
+        if isinstance(self.data, (dict, JSON)) and self.date_time_key in self.data:
             # dictionary of data series, including other keys
             result = []
             for key in self.data:
@@ -411,7 +446,7 @@ class TimeSeries:
                     result.append(key)
             return TimeSeries.TYPE_DICT_OF_LISTS, result
 
-        if type(self.data) == list and len(self.data) > 0 and type(self.data[0]) == dict:
+        if type(self.data) == list and len(self.data) > 0 and isinstance(self.data[0], (dict, JSON)):
             # list of dictionaries
             result = []
             for key in self.data[0]:
@@ -429,6 +464,8 @@ class TimeSeries:
         the constructor).
         The method does not return any result, but rather modifies the data stored in this instance.
         """
+        if len(self.get_values(self.date_time_key)) == 0:
+            raise ValueError("No data provided to time series")
         dates = self.get_values(self.date_time_key)
         if type(dates[0]) == datetime:
             # already in correct format

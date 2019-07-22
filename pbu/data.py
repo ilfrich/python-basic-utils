@@ -64,15 +64,22 @@ class JSON(dict):
         if type(value) == list and len(value) > 0 and type(value[0]) == dict and type(value[0]) != JSON:
             # convert list of dictionaries in list of JSON objects
             value = list(map(lambda x: JSON(x), value))
-        if type(value) == dict and type(value) != JSON:
+            self[key] = value
+        elif type(value) == dict and type(value) != JSON:
             # convert dictionary into JSON object
             value = JSON(value)
-        if hasattr(self, key):
+            self[key] = value
+        elif key in self:
+            self[key] = value
+        elif hasattr(self, key):
             # attribute exists, but is not a dictionary key, use native access
             super().__setattr__(key, value)
         else:
             # attribute doesn't exist, update dictionary content by key
             self[key] = value
+
+    def __str__(self):
+        return str(self.revert_to_dict())
 
     @staticmethod
     def _convert_input(arg):
@@ -91,3 +98,12 @@ class JSON(dict):
                 # convert into JSON object
                 arg[key] = JSON(arg[key])
         return arg
+
+    def revert_to_dict(self):
+        result = {}
+        for key in self:
+            if isinstance(self[key], JSON):
+                result[key] = self.__getattr__(key).revert_to_dict()
+            else:
+                result[key] = self.__getattr__(key)
+        return result
