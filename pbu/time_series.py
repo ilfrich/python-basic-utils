@@ -68,7 +68,7 @@ class TimeSeries:
         # collect stats
         stats = {}
         # determine datetime series from input data
-        dt_series = self.get_values(self.date_time_key)
+        dt_series = self.get_dates()
         for dt in dt_series:
             if type(dt) == str:
                 # string dates, need to be parsed
@@ -112,6 +112,11 @@ class TimeSeries:
         existing_data_length = len(self.data)
         if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
             existing_data_length = len(self.data[self.date_time_key])
+
+        if len(new_values) + 1 == existing_data_length:
+            # missing one value, append last value again
+            new_values.append(new_values[-1])
+
         if len(new_values) != existing_data_length:
             raise ValueError(
                 "Failed to add new data series with length {} to existing data series with length {}".format(
@@ -170,7 +175,33 @@ class TimeSeries:
             dt_series = list(map(lambda x: x[selected_key], self.data))
             return dt_series
 
+        raise AttributeError("Data series doesn't have a valid type. Extraction of value series not possible.")
+
+    def get_dates(self):
+        """
+        Extracts the values of the date time column as list from the current time series.
+        :return: a list of datetime objects
+        """
+        if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
+            return self.data[self.date_time_key]
+        elif self.type == TimeSeries.TYPE_LIST_OF_DICTS:
+            return list(map(lambda x: x[self.date_time_key], self.data))
+
         raise AttributeError("Data series doesn't have a valid type. Extraction of date time series not possible.")
+
+    def get_start_date(self):
+        """
+        Extracts the first date in the date time series.
+        :return: a datetime object representing the first entry in the time series.
+        """
+        return self._get_date_value(0)
+
+    def get_end_date(self):
+        """
+        Extracts the last date in the date time series.
+        :return: a datetime object representing the last entry in the time series
+        """
+        return self._get_date_value(-1)
 
     def add_series(self, time_series, keys_to_add=None):
         """
@@ -195,14 +226,13 @@ class TimeSeries:
                 raise ValueError("Attempting to add key {} to existing data series, which already has "
                                  "such a key".format(key))
 
-        # first align current data set
+        # first align current data set (ensure it is aligned)
         resolution = self.get_resolution()  # resolution of existing series
         self.align_to_resolution(resolution)
 
         # also align the new time series to the given resolution and time frame
-        date_series = self.get_values(self.date_time_key)
-        time_series.align_to_resolution(resolution=resolution, start_date=date_series[0], end_date=date_series[-1])
-
+        time_series.align_to_resolution(resolution=resolution, start_date=self.get_start_date(),
+                                        end_date=self.get_end_date())
         for key in time_series.keys:
             self.add_values(key, time_series.get_values(key))
         _, self.keys = self._check_input_data()
@@ -249,36 +279,39 @@ class TimeSeries:
         tolerance = resolution / 2
 
         # start date (use start date minus resolution to match the first entry perfectly)
-        current_date = self.get_values(self.date_time_key)[0]
+        current_date = self.get_start_date()
         if start_date is not None:
             current_date = start_date
         if end_date is None:
-            end_date = self.get_values(self.date_time_key)[-1]
+            end_date = self.get_end_date()
 
         # standardise initial data
-        original_data = self.data
+        main_data = self.data
         if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
-            original_data = self.translate_to_list_of_dicts()
+            main_data = self.translate_to_list_of_dicts()
 
         # runtime variables for the alignment operation below
         prev_value = None
         current_original_data_index = 0
         result = []
         # as long as we haven't reached the end date, keep adding values
-        while current_date < end_date:
+        while current_date <= end_date:
+            is_last = False
+            if current_original_data_index >= len(main_data) - 1:
+                is_last = True
 
             # ensure we don't run into index errors (repeat last element until end-date in worst-case scenario)
-            if current_original_data_index >= len(original_data):
-                current_original_data_index = len(original_data) - 1
+            if current_original_data_index >= len(main_data):
+                current_original_data_index = len(main_data) - 1  # might cause endless loop in skip branch
 
             # extract date information and time delta
-            original_date = original_data[current_original_data_index][self.date_time_key]
+            original_date = main_data[current_original_data_index][self.date_time_key]
             diff_seconds = (current_date - original_date).total_seconds()
 
             # close enough
             if current_date == original_date or abs(diff_seconds) < tolerance.total_seconds():
                 # fetch the value from the original data
-                prev_value = original_data[current_original_data_index]
+                prev_value = main_data[current_original_data_index]
                 # update date of this entry to current date
                 prev_value[self.date_time_key] = current_date
                 # add to result
@@ -289,16 +322,41 @@ class TimeSeries:
 
             # implies the data point is no where close, skip this entry
             elif current_date > original_date:
-                prev_value = original_data[current_original_data_index]
-                current_original_data_index += 1
+                prev_value = main_data[current_original_data_index]
+
+                if is_last:
+                    # we've already reached the end of the data series, fill with last value
+                    if current_date < end_date:
+                        missing_entries = math.floor((end_date - current_date) / resolution) + 1
+                        for index in range(0, missing_entries):
+                            # copy last item
+                            new_item = copy(prev_value)
+                            # update timestamp
+                            new_item[self.date_time_key] = current_date + resolution
+                            # add to result
+                            result.append(new_item)
+                            # remember for next loop
+                            prev_value = new_item
+                            # increment timestamp
+                            current_date += resolution
+                    if current_date == end_date:
+                        # breaks the while loop
+
+                        current_date += resolution
+                else:
+                    current_original_data_index += 1
 
             # implies that the next data point is in the future and we need to interpolate missing values
             elif current_date < original_date:
                 # compute gaps
                 gaps = {}
-                next_value = original_data[current_original_data_index]
+                next_value = main_data[current_original_data_index]
+
                 if prev_value is None:
                     prev_value = next_value
+                    # special handling for initial result to prefill with first value
+                    if len(result) == 0:
+                        prev_value[self.date_time_key] = current_date
                 for key in self.keys:
                     gaps[key] = next_value[key] - prev_value[key]
                 missing_entries = math.floor((original_date - current_date) / resolution)
@@ -312,7 +370,10 @@ class TimeSeries:
 
                     prev_value = new_item
                     result.append(new_item)
-                current_date = prev_value[self.date_time_key] + resolution
+                    # update current date with latest added value
+                    current_date = new_item[self.date_time_key]
+                # increment resolution and index
+                current_date += resolution
                 current_original_data_index += 1
 
         # store aligned data
@@ -392,7 +453,8 @@ class TimeSeries:
             return result
 
     @staticmethod
-    def create_date_range(from_date, to_date=None, num_points=None, resolution=timedelta(minutes=5), include_start_date=False):
+    def create_date_range(from_date, to_date=None, num_points=None, resolution=timedelta(minutes=5),
+                          include_start_date=False, time_zone=datetime.utcnow().astimezone().tzinfo):
         """
         Creates a list of datetime instances in a given resolution an a given time frame.
         :param from_date: the start date for the time series
@@ -404,6 +466,11 @@ class TimeSeries:
         """
         if num_points is not None and to_date is not None:
             raise AttributeError("Cannot provide to_date and num_points at the same time")
+
+        # localize dates
+        from_date = from_date.astimezone(time_zone)
+        if to_date is not None:
+            to_date = to_date.astimezone(time_zone)
 
         # optionally offset start date
         if not include_start_date:
@@ -428,6 +495,21 @@ class TimeSeries:
     def _format_date_list_of_dict(item, date_time_key, date_format):
         item[date_time_key] = item[date_time_key].strftime(date_format)
         return item
+
+    def _get_date_value(self, index):
+        """
+        Extracts a given date from the date time series.
+        :param index: the index to retrieve (can be any valid Python list accessor)
+        :return: the date time at the given index
+        :raise IndexError, if the index provided doesn't exist.
+        """
+        if self.date_time_key is None:
+            raise AttributeError("Current time series doesn't provide a date_time_key")
+
+        if self.type == TimeSeries.TYPE_LIST_OF_DICTS:
+            return self.data[index][self.date_time_key]
+        elif self.type == TimeSeries.TYPE_DICT_OF_LISTS:
+            return self.data[self.date_time_key][index]
 
     def _check_input_data(self):
         """
@@ -464,9 +546,9 @@ class TimeSeries:
         the constructor).
         The method does not return any result, but rather modifies the data stored in this instance.
         """
-        if len(self.get_values(self.date_time_key)) == 0:
+        if len(self.get_dates()) == 0:
             raise ValueError("No data provided to time series")
-        dates = self.get_values(self.date_time_key)
+        dates = self.get_dates()
         if type(dates[0]) == datetime:
             # already in correct format
             return
