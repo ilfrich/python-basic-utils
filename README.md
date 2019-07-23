@@ -32,10 +32,10 @@ sudo pip3 install python-basic-utils
 
 ## Usage
 
-If you have a requirement.txt file, you can add `python-basic-utils`:
+If you have a requirement.txt file, you can add `python-basic-utils` (check latest version in Artifactory or setup.py):
 
 ```bash
-python-basic-utils==0.1.0
+python-basic-utils==0.2.2
 ```
 
 Then, simply import the class / module you need:
