@@ -113,11 +113,10 @@ class TimeSeries:
         if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
             existing_data_length = len(self.data[self.date_time_key])
 
-        if len(new_values) + 1 == existing_data_length:
-            # missing one value, append last value again
-            new_values.append(new_values[-1])
-
+        # make sure the value series align in length, if not fill new series with values (max +2)
+        new_values = TimeSeries._align_value_series_length(new_values, existing_data_length)
         if len(new_values) != existing_data_length:
+            # difference in size is more than 2
             raise ValueError(
                 "Failed to add new data series with length {} to existing data series with length {}".format(
                     len(new_values), existing_data_length))
@@ -495,6 +494,22 @@ class TimeSeries:
     def _format_date_list_of_dict(item, date_time_key, date_format):
         item[date_time_key] = item[date_time_key].strftime(date_format)
         return item
+
+    @staticmethod
+    def _align_value_series_length(new_values, length):
+        if len(new_values) + 1 == length:
+            # missing one value, append last value again
+            new_values.append(new_values[-1])
+        elif len(new_values) + 2 == length:
+            # missing two values, prepend first, append last
+            new_values = [new_values[0]] + new_values + [new_values[-1]]
+        elif len(new_values) - 1 == length:
+            # remove last item
+            new_values = new_values[0:len(new_values) - 1]
+        elif len(new_values) - 2 == length:
+            # remove first and last
+            new_values = new_values[1:len(new_values) - 1]
+        return new_values
 
     def _get_date_value(self, index):
         """
