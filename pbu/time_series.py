@@ -461,6 +461,7 @@ class TimeSeries:
         :param num_points: optional: the number of points to add (use only num_points or to_date)
         :param resolution: the resolution for the time series (default 5 minutes)
         :param include_start_date: boolean flag to indicate whether to add the from date or not (default: False)
+        :param time_zone: optional the timezone for which to create the date range (default UTC)
         :return: a list of datetime objects matching the provided resolution and from/to date.
         """
         if num_points is not None and to_date is not None:
