@@ -3,3 +3,4 @@ pymongo
 bson
 pytz
 mysql-connector-python
+pandas

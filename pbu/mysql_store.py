@@ -33,7 +33,10 @@ class AbstractMysqlStore(ABC):
         self.connection = connection
         self.table_name = table_name
         self.object_class = object_class
-        self.logger = Logger(name=self.__class__.__name__, log_folder=log_folder).get()
+        if log_folder is None:
+            self.logger = Logger(name=self.__class__.__name__).get()
+        else:
+            self.logger = Logger(name=self.__class__.__name__, log_folder=log_folder).get()
 
     def check_exists(self, definition):
         """

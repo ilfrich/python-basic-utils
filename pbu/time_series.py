@@ -1,4 +1,5 @@
 import math
+import pandas as pd
 from copy import copy
 from pbu import JSON
 from datetime import datetime, timedelta
@@ -451,6 +452,15 @@ class TimeSeries:
             # return dict of lists
             return result
 
+    def to_pd_data_frame(self):
+        """
+        Converts the time series into a pandas DataFrame with a given time index
+        :return: a pandas DataFrame with the date_time column set as the index
+        """
+        df = pd.DataFrame(self.translate_to_dict_of_lists(date_format=None))
+        df.set_index(self.date_time_key)
+        return df
+
     @staticmethod
     def create_date_range(from_date, to_date=None, num_points=None, resolution=timedelta(minutes=5),
                           include_start_date=False, time_zone=datetime.utcnow().astimezone().tzinfo):
@@ -478,6 +488,7 @@ class TimeSeries:
 
         # if num_points are provided, compute end date
         if num_points is not None:
+            num_points -= 1
             to_date = from_date + (num_points * resolution)
 
         if from_date > to_date:
@@ -552,6 +563,9 @@ class TimeSeries:
                     result.append(key)
             return TimeSeries.TYPE_LIST_OF_DICTS, result
 
+        if isinstance(self.data, list) and len(self.data) == 0:
+            return TimeSeries.TYPE_LIST_OF_DICTS, []
+
         raise ValueError("Provided input data structure is not supported. Only a dictionary of lists or a list of "
                          "dictionaries is allowed. Found type of input_data: {}".format(type(self.data)))
 
@@ -563,7 +577,9 @@ class TimeSeries:
         The method does not return any result, but rather modifies the data stored in this instance.
         """
         if len(self.get_dates()) == 0:
-            raise ValueError("No data provided to time series")
+            if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
+                self.data[self.date_time_key] = []
+            return
         dates = self.get_dates()
         if type(dates[0]) == datetime:
             # already in correct format
