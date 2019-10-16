@@ -1,5 +1,5 @@
 from pbu.data import JSON
-from pbu.logger import Logger, logger_thread
+from pbu.logger import Logger
 from pbu.time_series import TimeSeries
 from pbu.mysql_connection import MysqlConnection
 from pbu.mysql_store import AbstractMysqlStore, AbstractMysqlDocument

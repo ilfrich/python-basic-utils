@@ -1,7 +1,8 @@
 import os
-from dotenv import load_dotenv
 import requests
 import logging
+import sys
+from dotenv import load_dotenv
 from logging import handlers
 from pbu import JSON
 
@@ -14,6 +15,8 @@ LOG_LEVELS = JSON({
     "INFO": "INFO",
     "DEBUG": "DEBUG",
 })
+
+load_dotenv()  # ensure this is loaded before anything else that uses the logger
 
 class _CustomHttpHandler(logging.Handler):
     def __init__(self, level, url, auth_token=None):
@@ -36,7 +39,10 @@ class _CustomHttpHandler(logging.Handler):
         }
         if self.auth_token is not None:
             headers["Authorization"] = self.auth_token
-        requests.post(url=self.url, json=_CustomHttpHandler._map_log_record(record), headers=headers)
+        try:
+            requests.post(url=self.url, json=_CustomHttpHandler._map_log_record(record), headers=headers)
+        except BaseException as be:
+            print("Error sending log message: {}".format(_CustomHttpHandler._map_log_record(record)), file=sys.stderr)
 
 
 class Logger(logging.Logger):
@@ -44,7 +50,7 @@ class Logger(logging.Logger):
     File logger for this application, logging into application.log in the configured LOG_FOLDER.
     Usage:
 
-    >>> logger = Logger("some-name").get()
+    >>> logger = Logger("some-name")
     >>> logger.info("My message")
     """
     def __init__(self, name, log_folder="_logs"):
@@ -58,7 +64,7 @@ class Logger(logging.Logger):
         logger.setLevel(logging.DEBUG)
 
         # decide if this logger sends messages to a log server
-        load_dotenv()
+        # load_dotenv()
         self.log_server = os.getenv(CONFIG_KEY_LOG_SERVER)
         self.log_server_auth = os.getenv(CONFIG_KEY_LOG_SERVER_AUTH)
 
@@ -66,12 +72,13 @@ class Logger(logging.Logger):
 
         # check if other handlers are provided
         if not logger.handlers:
-            if self.log_server is None:
-                # listener process
-                self._configure_listener(logger, log_folder)
-            else:
+            if self.is_worker is None:
                 # worker process
                 self._configure_worker(logger, self.log_server, self.log_server_auth)
+            else:
+                # listener process
+                self._configure_listener(logger, log_folder)
+
         self._logger = logger
 
     def warn(self, msg, *args, **kwargs):
@@ -127,12 +134,3 @@ class Logger(logging.Logger):
 
         logger.addHandler(handler_error)
         logger.addHandler(handler_debug)
-
-
-def logger_thread(q):
-    while True:
-        record = q.get()
-        if record is None:
-            break
-        logger = logging.getLogger(record.name)
-        logger.handle(record)
