@@ -457,8 +457,8 @@ class TimeSeries:
         Converts the time series into a pandas DataFrame with a given time index
         :return: a pandas DataFrame with the date_time column set as the index
         """
-        df = pd.DataFrame(self.translate_to_dict_of_lists(date_format=None))
-        df.set_index(self.date_time_key)
+        df = pd.DataFrame(self.translate_to_dict_of_lists(date_format=None), index=self.get_dates())
+        del df[self.date_time_key]
         return df
 
     @staticmethod
@@ -555,7 +555,7 @@ class TimeSeries:
                     result.append(key)
             return TimeSeries.TYPE_DICT_OF_LISTS, result
 
-        if type(self.data) == list and len(self.data) > 0 and isinstance(self.data[0], (dict, JSON)):
+        if isinstance(self.data, list) and len(self.data) > 0 and isinstance(self.data[0], (dict, JSON)):
             # list of dictionaries
             result = []
             for key in self.data[0]:
@@ -606,5 +606,5 @@ class TimeSeries:
             # translate
             output = self.translate_to_dict_of_lists()
             output[self.date_time_key] = converted_dates
-            self.data = TimeSeries(converted_dates, date_time_key=self.date_time_key,
+            self.data = TimeSeries(output, date_time_key=self.date_time_key,
                                    time_zone=self.time_zone).translate_to_list_of_dicts()

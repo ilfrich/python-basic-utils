@@ -1,7 +1,7 @@
 deploy:
 	python setup.py sdist bdist_wheel upload -r artifactory
 
-local-install:
+local-install: local-uninstall
 	sudo python3 setup.py develop
 
 local-uninstall:

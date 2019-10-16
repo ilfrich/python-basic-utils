@@ -57,15 +57,15 @@ class AbstractMysqlStore(ABC):
             # unpack table name from result
             t_name = table_name[0]
             if t_name == self.table_name:
-                self.logger.debug("[SQL] Table '{}' already exists.".format(self.table_name))
+                self.logger.info("[SQL] Table '{}' already exists.".format(self.table_name))
                 contains = True
 
         if not contains:
             # table doesn't exist, load definition from resource file
             definition = definition.decode('utf-8').replace("\n", "").format(self.table_name)
             # create table
-            self.logger.debug("[SQL] Creating table '{}'.".format(self.table_name))
-            self.logger.debug("[SQL] {}".format(definition))
+            self.logger.info("[SQL] Creating table '{}'.".format(self.table_name))
+            self.logger.info("[SQL] {}".format(definition))
             cursor.execute(definition)
             self.close(cursor, connection, True)
             return
@@ -96,7 +96,7 @@ class AbstractMysqlStore(ABC):
                 # insert/update single record
                 cursor.execute(statement, params)
             if debug:
-                self.logger.debug(cursor.statement)
+                self.logger.info(cursor.statement)
 
             result = cursor.lastrowid
 
@@ -127,7 +127,7 @@ class AbstractMysqlStore(ABC):
             else:
                 cursor.execute(statement, params)
             if debug:
-                self.logger.debug(cursor.statement)
+                self.logger.info(cursor.statement)
             res = cursor.fetchall()
             self.close(cursor, connection)
         except (PoolError, OperationalError, BaseException) as except1:

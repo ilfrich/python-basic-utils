@@ -4,3 +4,4 @@ bson
 pytz
 mysql-connector-python
 pandas
+python-dotenv
