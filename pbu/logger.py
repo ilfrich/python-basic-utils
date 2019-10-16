@@ -2,7 +2,6 @@ import os
 import requests
 import logging
 import sys
-from dotenv import load_dotenv
 from logging import handlers
 from pbu import JSON
 
@@ -16,7 +15,6 @@ LOG_LEVELS = JSON({
     "DEBUG": "DEBUG",
 })
 
-load_dotenv()  # ensure this is loaded before anything else that uses the logger
 
 class _CustomHttpHandler(logging.Handler):
     def __init__(self, level, url, auth_token=None):
@@ -67,12 +65,13 @@ class Logger(logging.Logger):
         # load_dotenv()
         self.log_server = os.getenv(CONFIG_KEY_LOG_SERVER)
         self.log_server_auth = os.getenv(CONFIG_KEY_LOG_SERVER_AUTH)
+        print(self.log_server, name)
 
         self.is_worker = self.log_server is not None
 
         # check if other handlers are provided
         if not logger.handlers:
-            if self.is_worker is None:
+            if self.is_worker:
                 # worker process
                 self._configure_worker(logger, self.log_server, self.log_server_auth)
             else:
