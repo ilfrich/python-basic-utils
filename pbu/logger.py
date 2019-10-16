@@ -3,7 +3,7 @@ from dotenv import load_dotenv
 import requests
 import logging
 from logging import handlers
-from pbu.data import JSON
+from pbu import JSON
 
 CONFIG_KEY_LOG_SERVER = "PBU_LOG_SERVER"
 CONFIG_KEY_LOG_SERVER_AUTH = "PBU_LOG_SERVER_AUTH"
