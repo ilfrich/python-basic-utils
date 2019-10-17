@@ -51,7 +51,7 @@ class Logger(logging.Logger):
     >>> logger = Logger("some-name")
     >>> logger.info("My message")
     """
-    def __init__(self, name, log_folder="_logs"):
+    def __init__(self, name, log_folder="_logs", enable_logger_name=True):
         """
         Creates a new instance of this logger and will store it as a private field, which is exposed via the get()
         method.
@@ -75,7 +75,7 @@ class Logger(logging.Logger):
                 self._configure_worker(logger, self.log_server, self.log_server_auth)
             else:
                 # listener process
-                self._configure_listener(logger, log_folder)
+                self._configure_listener(logger, log_folder, enable_logger_name)
 
         self._logger = logger
 
@@ -111,10 +111,12 @@ class Logger(logging.Logger):
         logger.addHandler(handler_error)
 
     @staticmethod
-    def _configure_listener(logger, log_folder="_logs"):
+    def _configure_listener(logger, log_folder="_logs", enable_logger_name=True):
 
         # message formatter
         formatter = logging.Formatter("%(asctime)s %(levelname)s:%(name)s %(message)s")
+        if enable_logger_name is False:
+            formatter = logging.Formatter("%(asctime)s %(levelname)s:%(message)s")
         # file name for the log
         file_name_debug = os.path.join(log_folder, "debug.log")
         file_name_error = os.path.join(log_folder, "error.log")
