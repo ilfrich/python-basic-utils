@@ -65,7 +65,6 @@ class Logger(logging.Logger):
         # load_dotenv()
         self.log_server = os.getenv(CONFIG_KEY_LOG_SERVER)
         self.log_server_auth = os.getenv(CONFIG_KEY_LOG_SERVER_AUTH)
-        print(self.log_server, name)
 
         self.is_worker = self.log_server is not None
 
