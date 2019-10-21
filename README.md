@@ -35,7 +35,7 @@ sudo pip3 install python-basic-utils
 If you have a requirement.txt file, you can add `python-basic-utils` (check latest version in Artifactory or setup.py):
 
 ```bash
-python-basic-utils==0.2.2
+python-basic-utils==0.3.4
 ```
 
 Then, simply import the class / module you need:
@@ -87,7 +87,7 @@ This is a basic logger allowing to write log files, for `logger.info` it writes 
 ```python
 from pbu import Logger
 
-logger = Logger(name="logger-name").get()
+logger = Logger(name="logger-name")
 logger.debug("Some debug message goes here")
 logger.error("Error executing something")
 

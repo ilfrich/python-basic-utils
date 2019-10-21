@@ -28,7 +28,7 @@ class AbstractMongoStore(ABC):
         self.db = client[db_name]
         self.collection = self.db[collection_name]
 
-        self.logger = Logger(self.__class__.__name__).get()
+        self.logger = Logger(self.__class__.__name__)
         self.object_class = deserialised_class
         self.data_model_version = data_model_version
 

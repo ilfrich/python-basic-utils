@@ -21,7 +21,7 @@ class MysqlConnection:
         self.database = database
         self.user = user
         self.password = password
-        self.logger = Logger(self.__class__.__name__).get()
+        self.logger = Logger(self.__class__.__name__)
         self.connection_pool = MySQLConnectionPool(pool_name="pynative_pool", pool_size=20, pool_reset_session=True,
                                                    host=host, database=database, user=user, password=password)
 
