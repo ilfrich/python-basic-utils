@@ -76,9 +76,12 @@ class Logger(logging.Logger):
                 self._configure_worker(logger, self.log_server, self.log_server_auth)
             else:
                 # listener process
-                if os.getenv(CONFIG_KEY_LOG_FOLDER) is not None:
+                if os.getenv(CONFIG_KEY_LOG_FOLDER) is not None and log_folder is None:
                     log_folder = os.getenv(CONFIG_KEY_LOG_FOLDER)
-                self._configure_listener(logger, log_folder, enable_logger_name)
+                if log_folder is None:
+                    self._configure_listener(logger, enable_logger_name=enable_logger_name)
+                else:
+                    self._configure_listener(logger, log_folder, enable_logger_name)
 
         self._logger = logger
 
