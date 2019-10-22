@@ -130,7 +130,7 @@ class TimeSeries:
             # translate to dictionary, add values and then translate back
             output = self.translate_to_dict_of_lists()
             output[new_key] = new_values
-            self.data = TimeSeries(output, self.date_time_key).translate_to_list_of_dicts()
+            self.data = TimeSeries(output, self.date_time_key, time_zone=self.time_zone).translate_to_list_of_dicts()
 
         self.keys.append(new_key)
 
@@ -152,7 +152,7 @@ class TimeSeries:
         else:
             output = self.translate_to_dict_of_lists()
             output[new_key] = [constant_value] * len(self.data)
-            self.data = TimeSeries(output, self.date_time_key).translate_to_list_of_dicts()
+            self.data = TimeSeries(output, self.date_time_key, time_zone=self.time_zone).translate_to_list_of_dicts()
 
     def get_values(self, selected_key):
         """
@@ -257,7 +257,7 @@ class TimeSeries:
             output = self.translate_to_dict_of_lists()
             for key in keys_to_remove:
                 del output[key]
-            self.data = TimeSeries(output, self.date_time_key).translate_to_list_of_dicts()
+            self.data = TimeSeries(output, self.date_time_key, time_zone=self.time_zone).translate_to_list_of_dicts()
         _, self.keys = self._check_input_data()
 
     def align_to_resolution(self, resolution=None, start_date=None, end_date=None):
@@ -379,7 +379,9 @@ class TimeSeries:
         # store aligned data
         if self.type == TimeSeries.TYPE_DICT_OF_LISTS:
             # convert if necessary
-            self.data = TimeSeries(input_data=result, date_time_key=self.date_time_key).translate_to_dict_of_lists()
+            self.data = TimeSeries(input_data=result,
+                                   date_time_key=self.date_time_key,
+                                   time_zone=self.time_zone).translate_to_dict_of_lists()
         else:
             # already in correct format
             self.data = result
@@ -581,16 +583,16 @@ class TimeSeries:
                 self.data[self.date_time_key] = []
             return
         dates = self.get_dates()
-        if type(dates[0]) == datetime:
+        if isinstance(dates[0], datetime):
             # already in correct format
             return
 
         converted_dates = []
-        if type(dates[0]) is float or type(dates[0]) is int:
+        if isinstance(dates[0], (float, int)):
             # timestamp
             for dt in dates:
                 converted_dates.append(datetime.fromtimestamp(dt, tz=self.time_zone))
-        elif type(dates[0]) is str:
+        elif isinstance(dates[0], str):
             if self.date_format is None:
                 raise AttributeError("Could not parse dates, because of missing date format.")
             # datetime string

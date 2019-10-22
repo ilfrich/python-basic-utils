@@ -103,7 +103,7 @@ class AbstractMysqlStore(ABC):
             self.close(cursor, connection, True)
         except (PoolError, OperationalError, BaseException) as except1:
             # something went wrong, ensure connection is closed
-            self.logger.exception("Error running invoke: {}".format(statement), except1)
+            self.logger.exception("Error running invoke: {}".format(statement))
             self.handle_exception(except1, cursor, connection)
 
         return result
@@ -131,7 +131,7 @@ class AbstractMysqlStore(ABC):
             res = cursor.fetchall()
             self.close(cursor, connection)
         except (PoolError, OperationalError, BaseException) as except1:
-            self.logger.exception("Error running query: {}".format(query.format(self.table_name)), except1)
+            self.logger.exception("Error running query: {}".format(query.format(self.table_name)))
             self.handle_exception(except1, cursor, connection)
 
         # process result
@@ -175,7 +175,7 @@ class AbstractMysqlStore(ABC):
             raise except1
         except (PoolError, OperationalError, BaseException) as except2:
             # couldn't close connection, raise new exception on top of the other
-            self.logger.exception("Failed to close connection during exception handler", except2)
+            self.logger.exception("Failed to close connection during exception handler")
             raise except2
 
     def get_field_list(self):
