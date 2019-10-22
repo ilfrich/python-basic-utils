@@ -100,8 +100,8 @@ class Logger(logging.Logger):
     def info(self, msg, *args, **kwargs):
         self._logger.info(msg, *args, **kwargs)
 
-    def exception(self, msg, *args, exc_info=True, **kwargs):
-        self._logger.exception(msg, *args, exc_info, **kwargs)
+    def exception(self, msg):
+        self._logger.exception(msg)
 
     @staticmethod
     def _configure_worker(logger, url, auth=None):
