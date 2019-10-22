@@ -7,6 +7,7 @@ from pbu import JSON
 
 CONFIG_KEY_LOG_SERVER = "PBU_LOG_SERVER"
 CONFIG_KEY_LOG_SERVER_AUTH = "PBU_LOG_SERVER_AUTH"
+CONFIG_KEY_LOG_FOLDER = "PBU_LOG_FOLDER"
 
 LOG_LEVELS = JSON({
     "ERROR": "ERROR",
@@ -51,14 +52,14 @@ class Logger(logging.Logger):
     >>> logger = Logger("some-name")
     >>> logger.info("My message")
     """
-    def __init__(self, name, log_folder="_logs", enable_logger_name=True):
+    def __init__(self, name, log_folder=None, enable_logger_name=True):
         """
         Creates a new instance of this logger and will store it as a private field, which is exposed via the get()
         method.
         :param name: the name of the class / component, which will be added as a marker to each log.
         """
         name = name.replace(".log", "")
-        logger = logging.getLogger("pbu.%s" % name)
+        logger = logging.getLogger(name)
         logger.setLevel(logging.DEBUG)
 
         # decide if this logger sends messages to a log server
@@ -75,6 +76,8 @@ class Logger(logging.Logger):
                 self._configure_worker(logger, self.log_server, self.log_server_auth)
             else:
                 # listener process
+                if os.getenv(CONFIG_KEY_LOG_FOLDER) is not None:
+                    log_folder = os.getenv(CONFIG_KEY_LOG_FOLDER)
                 self._configure_listener(logger, log_folder, enable_logger_name)
 
         self._logger = logger
