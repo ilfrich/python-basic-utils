@@ -3,7 +3,7 @@ from mysql.connector.errors import OperationalError, PoolError
 from pbu.logger import Logger
 from pbu.mongo_store import AbstractMongoDocument
 from abc import ABC, abstractmethod
-from pytz import timezone
+from tzlocal import get_localzone
 
 
 _DELETE_STATEMENT = "delete from {} where id=%s"
@@ -229,9 +229,6 @@ class AbstractMysqlStore(ABC):
         :param date_string: the date or datetime string
         :return: a datetime object of the parsed date
         """
-        # current timezone
-        tz = timezone(datetime.utcnow().astimezone().tzinfo)
-
         # short string, only date
         if len(date_string) == 10:
             dt = datetime.strptime(date_string, AbstractMysqlStore.DATE_FORMAT)
@@ -241,7 +238,7 @@ class AbstractMysqlStore(ABC):
             dt = datetime.strptime(date_string, AbstractMysqlStore.DATETIME_FORMAT)
 
         # localise and return
-        local_datetime = tz.localize(dt)
+        local_datetime = get_localzone().localize(dt)
         return local_datetime
 
     @staticmethod
@@ -265,7 +262,6 @@ class AbstractMysqlStore(ABC):
         :param timestamp: a unix timestamp or a datetime object
         :return: the timestamp or datetime object represented as a string
         """
-        tz = timezone(datetime.utcnow().astimezone().tzinfo)
         # handle int/float timestamps
         if isinstance(timestamp, (int, float)):
             dt = datetime.fromtimestamp(timestamp)
@@ -273,7 +269,7 @@ class AbstractMysqlStore(ABC):
         if isinstance(timestamp, datetime):
             dt = timestamp
         # localise and format
-        localized = tz.localize(dt)
+        localized = get_localzone().localize(dt)
         return datetime.strftime(localized, AbstractMysqlStore.DATETIME_FORMAT)
 
     @staticmethod

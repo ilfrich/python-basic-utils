@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name="python-basic-utils",
-      version="0.3.6",
+      version="0.3.7",
       description="Basic Utility module for the Python programming language",
       url="https://github.ibm.com/aur-pro/python-basic-utils",
       author="Peter Ilfrich",
@@ -14,7 +14,8 @@ setup(name="python-basic-utils",
             "mysql-connector-python",
             "pytz",
             "bson",
-            "pymongo"
+            "pymongo",
+            "tzlocal",
       ],
       tests_require=[
           "pytest",
