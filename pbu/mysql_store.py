@@ -89,7 +89,7 @@ class AbstractMysqlStore(ABC):
             if params is None:
                 # insert/update without params
                 cursor.execute(statement)
-            elif type(params) is list:
+            elif isinstance(params, list):
                 # insert/update multiple records
                 cursor.executemany(statement, params)
             else:
@@ -248,7 +248,7 @@ class AbstractMysqlStore(ABC):
         :param date_string: the date or date time string
         :return: an integer representing the date or datetime string.
         """
-        if type(date_string) == datetime:
+        if isinstance(date_string, datetime):
             # already a datetime object
             return date_string.timestamp()
         # parse to datetime and then return timestamp

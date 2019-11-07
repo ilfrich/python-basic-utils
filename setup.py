@@ -1,7 +1,7 @@
 from setuptools import setup
 
 setup(name="python-basic-utils",
-      version="0.3.7",
+      version="0.3.8",
       description="Basic Utility module for the Python programming language",
       url="https://github.ibm.com/aur-pro/python-basic-utils",
       author="Peter Ilfrich",

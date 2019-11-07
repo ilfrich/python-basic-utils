@@ -43,7 +43,7 @@ class AbstractMongoStore(ABC):
 
         if isinstance(document, dict) and "version" in document:
             document["version"] = self.data_model_version
-        return str(self.collection.insert_one(document))
+        return str(self.collection.insert_one(document).inserted_id)
 
     def query(self, query):
         """
@@ -81,8 +81,10 @@ class AbstractMongoStore(ABC):
         :param update: the update of the document (provided as $set and $unset)
         :return: the result of the update operation
         """
-        if "_id" in query and type(query["_id"]) is str:
+        if "_id" in query and isinstance(query["_id"], str):
             query["_id"] = AbstractMongoStore.object_id(query["_id"])
+        if "$set" in update and "_id" in update["$set"]:
+            del update["$set"]["_id"]
         return self.collection.update_one(query, update)
 
     def update(self, query, update):
@@ -92,7 +94,16 @@ class AbstractMongoStore(ABC):
         :param update: the update expressed as dictionary containing $set and/or $unset.
         :return: the result of the update operation
         """
+        if "$set" in update and "_id" in update["$set"]:
+            del update["$set"]["_id"]
         return self.collection.update(query, update)
+
+    def update_full(self, document):
+        if not isinstance(document, dict):
+            document = document.to_json()
+        return self.update_one(AbstractMongoStore.id_query(document["_id"]),
+                               AbstractMongoStore.set_update_full(document))
+
 
     def get(self, doc_id):
         """
@@ -117,6 +128,9 @@ class AbstractMongoStore(ABC):
         :return: the result of the remove operation
         """
         return self.collection.remove(AbstractMongoStore.id_query(str(doc_id)))
+
+    def delete_many(self, query):
+        return self.collection.remove(query)
 
     @staticmethod
     def list_to_json(item_list):
@@ -152,6 +166,8 @@ class AbstractMongoStore(ABC):
         :param set_update: a dictionary of all attributes/keys to be updated.
         :return: a dictionary containing a proper/valid update statement for MongoDB.
         """
+        if "_id" in set_update:
+            del set_update["_id"]
         return {
             "$set": set_update
         }
@@ -185,9 +201,9 @@ class AbstractMongoStore(ABC):
             "$set": {}
         }
 
-        if type(keys) is str:
+        if isinstance(keys, str):
             set_update["$set"][keys] = values
-        elif type(keys) is list:
+        elif isinstance(keys, list):
             for index, key in enumerate(keys):
                 set_update["$set"][key] = values[index]
 
@@ -205,7 +221,7 @@ class AbstractMongoDocument(ABC):
         :param data_model_version: the current data model version in the system
         """
         self.id = doc_id
-        if self.id is not None and type(self.id) is not str:
+        if self.id is not None and not isinstance(self.id, str):
             # convert ObjectId to str
             self.id = str(self.id)
         self.version = data_model_version

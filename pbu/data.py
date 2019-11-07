@@ -61,11 +61,11 @@ class JSON(dict):
         :param value: the value that is to be set for the given key. If this is a dictionary update, the input will be
         converted, by checking for dictionary sub-structures and converting them into JSON sub-structures.
         """
-        if type(value) == list and len(value) > 0 and type(value[0]) == dict and type(value[0]) != JSON:
+        if isinstance(value, list) and len(value) > 0 and isinstance(value[0], dict) and not isinstance(value[0], JSON):
             # convert list of dictionaries in list of JSON objects
             value = list(map(lambda x: JSON(x), value))
             self[key] = value
-        elif type(value) == dict and type(value) != JSON:
+        elif isinstance(value, dict) and not isinstance(value, JSON):
             # convert dictionary into JSON object
             value = JSON(value)
             self[key] = value
@@ -91,10 +91,10 @@ class JSON(dict):
         sub-structure containing JSON objects instead of dictionaries.
         """
         for key in arg:
-            if type(arg[key]) == list and len(arg[key]) > 0 and type(arg[key][0]) == dict and type(arg[key][0]) != JSON:
+            if isinstance(arg[key], list) and len(arg[key]) > 0 and isinstance(arg[key][0], dict) and not isinstance(arg[key][0], JSON):
                 # iterate through items
                 arg[key] = list(map(lambda x: JSON(x), arg[key]))
-            if type(arg[key]) == dict and type(arg[key]) != JSON:
+            if isinstance(arg[key], dict) and not isinstance(arg[key], JSON):
                 # convert into JSON object
                 arg[key] = JSON(arg[key])
         return arg

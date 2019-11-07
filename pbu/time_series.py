@@ -71,7 +71,7 @@ class TimeSeries:
         # determine datetime series from input data
         dt_series = self.get_dates()
         for dt in dt_series:
-            if type(dt) == str:
+            if isinstance(dt, str):
                 # string dates, need to be parsed
                 if self.date_format is None:
                     raise AttributeError("Attempted to determine resolution, but didn't provide a date format for "
@@ -213,7 +213,7 @@ class TimeSeries:
         all columns it finds (except the date time column).
         """
         # check type
-        if type(time_series) != TimeSeries:
+        if not isinstance(time_series, TimeSeries):
             raise ValueError("Provided time series is not of type TimeSeries, but {}".format(type(time_series)))
         # prepare keys
         if keys_to_add is None:
@@ -243,7 +243,7 @@ class TimeSeries:
         instance.
         :param keys_to_remove: the key to remove
         """
-        if type(keys_to_remove) == str:
+        if isinstance(keys_to_remove, str):
             keys_to_remove = [keys_to_remove]
 
         if self.date_time_key in keys_to_remove:
