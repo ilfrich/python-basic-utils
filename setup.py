@@ -1,12 +1,12 @@
 from setuptools import setup
 
-setup(name="python-basic-utils",
+setup(name="pbu",
       version="0.3.8",
       description="Basic Utility module for the Python programming language",
-      url="https://github.ibm.com/aur-pro/python-basic-utils",
+      url="https://github.com/ilfrich/python-basic-utils",
       author="Peter Ilfrich",
-      author_email="peter.ilfrich@au1.ibm.com",
-      license="Copyright IBM Corporation 2019",
+      author_email="das-peter@gmx.de",
+      license="Apache-2.0",
       packages=[
           "pbu"
       ],
