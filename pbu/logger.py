@@ -1,4 +1,5 @@
 import os
+import traceback
 import requests
 import logging
 import sys
@@ -30,7 +31,15 @@ class _CustomHttpHandler(logging.Handler):
         that is sent as the CGI data. Overwrite in your class.
         Contributed by Franz Glasner.
         """
-        return record.__dict__
+        result = record.__dict__
+        if "exc_info" in result and result["exc_info"] is not None:
+            for el in result["exc_info"]:
+                if isinstance(el, traceback):
+                    # print it in the current process, need to serialise the traceback (TODO)
+                    el.print_tb()
+            # remove this, in case of exception logging, to avoid JSON serialisation issues
+            del result["exc_info"]
+        return result
 
     def emit(self, record):
         headers = {
