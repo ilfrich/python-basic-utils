@@ -16,15 +16,15 @@
 Install via pip:
 
 ```bash
-pip install python-basic-utils
+pip install pbu
 ```
 
 ## Usage
 
-If you have a requirement.txt file, you can add `python-basic-utils`:
+If you have a requirement.txt file, you can add `pbu`:
 
 ```bash
-python-basic-utils==0.3.8
+pbu==0.3.9
 ```
 
 Then, simply import the class / module you need:
