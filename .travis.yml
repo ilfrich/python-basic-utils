@@ -7,11 +7,6 @@ install:
   - pip3 install -r requirements.txt
 script:
   - python3 setup.py sdist bdist_wheel
-deploy:
-  - provider: pypi
-    user: "$ARTIFACTORY_USER"
-    password: "$ARTIFACTORY_KEY"
-    server: https://na.artifactory.swg-devops.com/artifactory/api/pypi/aur-python-local
 branches:
   only:
     - master
