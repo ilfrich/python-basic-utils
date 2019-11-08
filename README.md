@@ -13,29 +13,18 @@
 
 ## Installation
 
-Until I find a repository for this package and an easy way to access it, simply clone the repository and run:
+Install via pip:
 
 ```bash
-make local-install
-```
-
-> _It may ask you for your root password, as packages need to be installed as root_
-
-> _The Makefile assumes you run pip via the `pip3` command_
-
-If you have Artifactory (https://na.artifactory.swg-devops.com/artifactory/api/pypi/aur-python-local) access, you can 
-also directly install it using:
-
-```bash
-sudo pip3 install python-basic-utils
+pip install python-basic-utils
 ```
 
 ## Usage
 
-If you have a requirement.txt file, you can add `python-basic-utils` (check latest version in Artifactory or setup.py):
+If you have a requirement.txt file, you can add `python-basic-utils`:
 
 ```bash
-python-basic-utils==0.3.4
+python-basic-utils==0.3.8
 ```
 
 Then, simply import the class / module you need:
