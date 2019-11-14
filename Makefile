@@ -1,5 +1,5 @@
 deploy:
-	python setup.py sdist bdist_wheel upload
+	python3 setup.py sdist bdist_wheel && python3 -m twine upload dist/*
 
 local-install: local-uninstall
 	sudo python3.6 setup.py develop

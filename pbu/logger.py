@@ -77,7 +77,6 @@ class Logger(logging.Logger):
         logger.setLevel(logging.DEBUG)
 
         # decide if this logger sends messages to a log server
-        # load_dotenv()
         self.log_server = os.getenv(CONFIG_KEY_LOG_SERVER)
         self.log_server_auth = os.getenv(CONFIG_KEY_LOG_SERVER_AUTH)
 
