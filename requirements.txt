@@ -6,3 +6,4 @@ mysql-connector-python
 pandas
 python-dotenv
 tzlocal
+requests

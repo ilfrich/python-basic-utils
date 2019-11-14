@@ -81,6 +81,8 @@ class JSON(dict):
     def __str__(self):
         return str(self.revert_to_dict())
 
+    __repr__ = __str__
+
     @staticmethod
     def _convert_input(arg):
         """

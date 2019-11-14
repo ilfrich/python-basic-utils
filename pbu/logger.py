@@ -1,8 +1,8 @@
 import os
-import traceback
 import requests
 import logging
 import sys
+import traceback
 from logging import handlers
 from pbu import JSON
 
@@ -34,10 +34,14 @@ class _CustomHttpHandler(logging.Handler):
         result = record.__dict__
         if "exc_info" in result and result["exc_info"] is not None:
             for el in result["exc_info"]:
-                if isinstance(el, traceback):
-                    # print it in the current process, need to serialise the traceback (TODO)
-                    el.print_tb()
-            # remove this, in case of exception logging, to avoid JSON serialisation issues
+                if type(el).__name__ == "traceback":
+                    # custom traceback logging, because we can't serialise this
+                    stack = traceback.extract_stack()
+                    for err_line in stack[:-9]:
+                        print("    {}:{} {}".format(err_line.filename, err_line.lineno, err_line.name))
+                        print("        {}".format(err_line.line))
+                    for err_line in traceback.format_tb(el):
+                        print("    {}".format(err_line.strip()))
             del result["exc_info"]
         return result
 
@@ -50,7 +54,8 @@ class _CustomHttpHandler(logging.Handler):
         try:
             requests.post(url=self.url, json=_CustomHttpHandler._map_log_record(record), headers=headers)
         except BaseException as be:
-            print("Error sending log message: {}".format(_CustomHttpHandler._map_log_record(record)), file=sys.stderr)
+            print("Error sending log message: {} ({})".format(_CustomHttpHandler._map_log_record(record), be),
+                  file=sys.stderr)
 
 
 class Logger(logging.Logger):
@@ -111,6 +116,9 @@ class Logger(logging.Logger):
 
     def exception(self, msg):
         self._logger.exception(msg)
+
+    def handle(self, record):
+        self._logger.handle(record)
 
     @staticmethod
     def _configure_worker(logger, url, auth=None):
