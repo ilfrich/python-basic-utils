@@ -1,5 +1,7 @@
 # Python Basic Utilities `pbu`
 
+Available on [PyPi](https://pypi.org/project/pbu/)
+
 **Table of Contents**
 
 1. [Installation](#installation)

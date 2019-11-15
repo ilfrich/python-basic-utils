@@ -4,18 +4,10 @@ import logging
 import sys
 import traceback
 from logging import handlers
-from pbu import JSON
 
 CONFIG_KEY_LOG_SERVER = "PBU_LOG_SERVER"
 CONFIG_KEY_LOG_SERVER_AUTH = "PBU_LOG_SERVER_AUTH"
 CONFIG_KEY_LOG_FOLDER = "PBU_LOG_FOLDER"
-
-LOG_LEVELS = JSON({
-    "ERROR": "ERROR",
-    "WARN": "WARN",
-    "INFO": "INFO",
-    "DEBUG": "DEBUG",
-})
 
 
 class _CustomHttpHandler(logging.Handler):
@@ -43,9 +35,16 @@ class _CustomHttpHandler(logging.Handler):
                     for err_line in traceback.format_tb(el):
                         print("    {}".format(err_line.strip()))
             del result["exc_info"]
+        if "msg" in result and not isinstance(result["msg"], str):
+            result["msg"] = str(result["msg"])
         return result
 
     def emit(self, record):
+
+        is_higher_than_error = self.level == logging.ERROR and record.levelno in [logging.CRITICAL, logging.FATAL]
+        if record.levelno != self.level and not is_higher_than_error:
+            return
+
         headers = {
             "Content-Type": "application/json",
         }
@@ -66,7 +65,8 @@ class Logger(logging.Logger):
     >>> logger = Logger("some-name")
     >>> logger.info("My message")
     """
-    def __init__(self, name, log_folder=None, enable_logger_name=True):
+    def __init__(self, name, log_folder=None, enable_logger_name=True, enabled_log_levels=[logging.INFO, logging.ERROR],
+                 message_format="%(asctime)s %(levelname)s:%(name)s %(message)s"):
         """
         Creates a new instance of this logger and will store it as a private field, which is exposed via the get()
         method.
@@ -86,15 +86,18 @@ class Logger(logging.Logger):
         if not logger.handlers:
             if self.is_worker:
                 # worker process
-                self._configure_worker(logger, self.log_server, self.log_server_auth)
+                self._configure_worker(logger, self.log_server, message_format, self.log_server_auth,
+                                       enabled_log_levels)
             else:
                 # listener process
                 if os.getenv(CONFIG_KEY_LOG_FOLDER) is not None and log_folder is None:
                     log_folder = os.getenv(CONFIG_KEY_LOG_FOLDER)
                 if log_folder is None:
-                    self._configure_listener(logger, enable_logger_name=enable_logger_name)
+                    self._configure_listener(logger,message_format,  enable_logger_name=enable_logger_name,
+                                             enabled_log_levels=enabled_log_levels)
                 else:
-                    self._configure_listener(logger, log_folder, enable_logger_name)
+                    self._configure_listener(logger, message_format, log_folder=log_folder, enable_logger_name=enable_logger_name,
+                                             enabled_log_levels=enabled_log_levels)
 
         self._logger = logger
 
@@ -120,39 +123,32 @@ class Logger(logging.Logger):
         self._logger.handle(record)
 
     @staticmethod
-    def _configure_worker(logger, url, auth=None):
-        handler_debug = _CustomHttpHandler(logging.INFO, url, auth)
-        handler_error = _CustomHttpHandler(logging.ERROR, url, auth)
-
-        # message formatter
-        formatter = logging.Formatter("%(asctime)s %(levelname)s:%(name)s %(message)s")
-        handler_debug.setFormatter(formatter)
-        handler_error.setFormatter(formatter)
-
-        logger.addHandler(handler_debug)
-        logger.addHandler(handler_error)
+    def _configure_worker(logger, url, message_format, auth=None, enabled_log_levels=[logging.INFO, logging.ERROR]):
+        for log_level in enabled_log_levels:
+            handler = _CustomHttpHandler(log_level, url, auth)
+            formatter = logging.Formatter(message_format)
+            handler.setFormatter(formatter)
+            logger.addHandler(handler)
 
     @staticmethod
-    def _configure_listener(logger, log_folder="_logs", enable_logger_name=True):
-
-        # message formatter
-        formatter = logging.Formatter("%(asctime)s %(levelname)s:%(name)s %(message)s")
+    def _configure_listener(logger, message_format, log_folder="_logs", enable_logger_name=True,
+                            enabled_log_levels=[logging.INFO, logging.ERROR]):
+        formatter = logging.Formatter(message_format)
         if enable_logger_name is False:
-            formatter = logging.Formatter("%(asctime)s %(levelname)s:%(message)s")
-        # file name for the log
-        file_name_debug = os.path.join(log_folder, "debug.log")
-        file_name_error = os.path.join(log_folder, "error.log")
-        # add a rotating file handler, starting a new file every(1) (d)ay
-        handler_debug = handlers.TimedRotatingFileHandler(file_name_debug, when="d", interval=1, backupCount=30)
-        handler_error = handlers.TimedRotatingFileHandler(file_name_error, when="d", interval=1, backupCount=30)
+            # remove logger name from message format
+            message_format = message_format.replace("%(name)s", "")
+            formatter = logging.Formatter(message_format)
 
-        # configure handler and logger
-        handler_debug.setFormatter(formatter)
-        handler_debug.setLevel(logging.INFO)
-        # yes, it is a debug logger, but Python considers info higher severity than debug
+        file_names = {
+            logging.INFO: "info.log",
+            logging.DEBUG: "debug.log",
+            logging.ERROR: "error.log",
+            logging.WARNING: "warning.log",
+        }
 
-        handler_error.setFormatter(formatter)
-        handler_error.setLevel(logging.ERROR)
-
-        logger.addHandler(handler_error)
-        logger.addHandler(handler_debug)
+        for log_level in enabled_log_levels:
+            file_name = os.path.join(log_folder, file_names[log_level])
+            handler = handlers.TimedRotatingFileHandler(file_name, when="d", interval=1, backupCount=30)
+            handler.setFormatter(formatter)
+            handler.setLevel(log_level)
+            logger.addHandler(handler)
