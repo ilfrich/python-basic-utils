@@ -6,7 +6,7 @@ class JSON(dict):
 
     Usage example:
 
-    >>> from pbu.data import JSON
+    >>> from pbu import JSON
     >>> my_obj = JSON({"initial": "content"})
     >>> print(my_obj.initial)
     content

@@ -104,7 +104,6 @@ class AbstractMongoStore(ABC):
         return self.update_one(AbstractMongoStore.id_query(document["_id"]),
                                AbstractMongoStore.set_update_full(document))
 
-
     def get(self, doc_id):
         """
         Retrieves the document with the provided document ID
@@ -232,7 +231,7 @@ class AbstractMongoDocument(ABC):
         :param json: the json object or dictionary from which to extract information.
         """
         if "_id" in json:
-            self.id = json["id"]
+            self.id = str(json["id"])
         if "version" in json:
             self.version = json["version"]
 
@@ -247,6 +246,7 @@ class AbstractMongoDocument(ABC):
             result["_id"] = str(self.id)
         if self.version is not None:
             result["version"] = self.version
+        return result
 
     @staticmethod
     @abstractmethod
