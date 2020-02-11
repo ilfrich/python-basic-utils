@@ -38,12 +38,14 @@ class AbstractMongoStore(ABC):
         :param document: the document to provide either as dictionary or MongoDocument sub-class instance.
         :return: the id of the newly created document
         """
-        if isinstance(document, AbstractMongoDocument):
+        if getattr(document, "to_json", None) is not None:
             document = document.to_json()
 
-        if isinstance(document, dict) and "version" in document:
-            document["version"] = self.data_model_version
-        return str(self.collection.insert_one(document).inserted_id)
+        if isinstance(document, dict):
+            if "version" in document:
+                document["version"] = self.data_model_version
+            return str(self.collection.insert_one(document).inserted_id)
+        raise ValueError("Provided document needs to be a dict or provide a to_json() method")
 
     def query(self, query):
         """
@@ -100,6 +102,8 @@ class AbstractMongoStore(ABC):
 
     def update_full(self, document):
         if not isinstance(document, dict):
+            if getattr(document, "to_json", None) is None:
+                raise ValueError("Provided document needs to be a dict or have a to_json method.")
             document = document.to_json()
         return self.update_one(AbstractMongoStore.id_query(document["_id"]),
                                AbstractMongoStore.set_update_full(document))

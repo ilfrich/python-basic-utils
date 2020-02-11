@@ -12,6 +12,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     3. [TimeSeries](#timeseries) - powerful helper class to organise time series
     4. [AbstractMongoStore](#abstractmongostore) - helper and wrapper class for MongoDB access
     5. [AbstractMysqlStore](#abstractmysqlstore) - helper and wrapper class for MySQL access
+    6. [BasicMonitor](#basicmonitor) - monitor class orchestrating regular operations
 
 ## Installation
 
@@ -222,3 +223,91 @@ store.update(AbstractMongoStore.id_query(doc_id),
 # returns a list of MyObjectType objects matching the version
 list_of_results = store.query({ "version": 5 })
 ``` 
+
+### BasicMonitor
+
+An abstract class providing base-functionality for running monitors - threads that run a specific routine in a regular 
+interval. This can be an executor waiting for new tasks to be processed (and checking every 5 seconds) or a thread that
+monitors some readout in a regular interval. The monitor is wrapped to re-start itself, in case of errors.
+
+**Example**
+
+```python
+from pbu import BasicMonitor
+
+class MyOwnMonitor(BasicMonitor):
+    def __init__(self, data):
+        super().__init__(monitor_id="my_id", wait_time=5)  # waits 5 seconds between each execution loop
+        self.data = data
+        
+    def running(self):
+        while self.active:
+            # your code goes here (example):
+            # result = fetch_data(self.data)
+            # store_result(result)
+            self.wait()
+```
+
+If you want to run in a regular interval, the `running` method needs to be slightly modified:
+
+```python
+from time import time
+from pbu import BasicMonitor
+
+class MyRegularOwnMonitor(BasicMonitor):
+    def __init__(self, data):
+        super().__init__(monitor_id="another_id", wait_time=60, run_interval=True)  # execute every 60 seconds
+        self.data = data
+        
+    def running(self):
+        while self.active:
+            start_ts = time()  # capture start of loop
+            # your code goes here (example):
+            # result = do_something(self.data)
+            # store_result(result)
+            self.wait(exec_duration=round(time() - start_ts))  # include the execution duration
+```
+
+You can also pass a custom logger as `custom_logger` argument to the constructor. By default it will use the 
+`pbu.Logger` and log major events such as start/stop/restart and errors.
+
+**Manage and run monitor**
+
+```python
+import threading
+
+def start_monitor_thread(monitor):
+    """
+    Thread function to be run by the new thread.
+    :param monitor: BasicMonitor - an instance of sub-class of BasicMonitor 
+    """
+    # start the monitor
+    monitor.start()
+
+
+# create monitor instance of your own class that implements BasicMonitor
+regular_monitor = MyRegularOwnMonitor(data={"some": "data"})
+
+# create thread with start-up function and start it
+t = threading.Thread(target=start_monitor_thread, args=(regular_monitor, ), daemon=True)
+t.start()
+
+# in a separate piece of code (e.g. REST handler or timer) you can stop the monitor instance
+regular_monitor.stop()
+```
+
+Stopping a monitor doesn't interrupt the current thread. If the monitor is for example in a wait period and you send the 
+`stop` signal, the thread will still run until the wait period passes.
+
+> _In an API scenario, I recommend using a `dict` or `list` to cache monitors and retrieve them via the API using the 
+`to_json()` method for identification. This then allows you to signal starting / stopping of monitors by providing the 
+monitor ID and lookup the monitor instance in the monitor cache._
+
+**`BasicMonitor` Methods**
+
+- `start()` - starts the monitor
+- `stop()` - stops the monitor
+- `to_json()` - returns a dictionary with basic monitor technical information (id, state, wait behaviour, etc)
+- `wait_till_midnight()` - waits till the next midnight in your machines time zone
+- `wait(exec_duration=0)` - waits for the time specified in the constructor and in case of `run_interval=True` for the 
+optional `exec_duration`, if provided.
