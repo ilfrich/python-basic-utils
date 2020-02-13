@@ -6,7 +6,7 @@ from abc import ABC, abstractmethod
 from tzlocal import get_localzone
 
 
-_DELETE_STATEMENT = "delete from {} where id=%s"
+_DELETE_STATEMENT = "delete from {} where {}=%s"
 _SELECT_STATEMENT = "select {} from {}"
 _WHERE_STATEMENT = "{} where {}".format(_SELECT_STATEMENT, "{}")
 _UPDATE_STATEMENT = "update {} set {} where {}"
@@ -145,27 +145,38 @@ class AbstractMysqlStore(ABC):
                 result.append(row)
         return result
 
-    def delete(self, row_id):
+    def delete(self, row_id, id_field="id"):
         """
         Deletes a given record from this table
-        :param row_id: the primary key of the record to delete
+        :param row_id: the primary key of the row to delete
+        :param id_field: the column name of the primary key
         """
         cursor, connection = self.connection.cursor(prepared=True)
         try:
-            cursor.execute(_DELETE_STATEMENT.format(self.table_name), (row_id,))
+            cursor.execute(_DELETE_STATEMENT.format(self.table_name, id_field), (row_id,))
             self.close(cursor, connection, True)
         except (PoolError, OperationalError, BaseException) as except1:
             self.logger.exception("Error deleting item: {} / {}".format(_DELETE_STATEMENT.format(self.table_name, row_id)))
             self.handle_exception(except1, cursor, connection)
 
-    def get(self, row_id):
-        result = self.run_query(self.create_select_query(where_clause="id = %s"), (row_id, ),
+    def get(self, row_id, id_field="id"):
+        """
+        Retrieves a single row from the database.
+        :param row_id: the primary key of the row to extract
+        :param id_field: the column name of the primary key
+        :return the parsed row object or None, if the row doesn't exist
+        """
+        result = self.run_query(self.create_select_query(where_clause="{} = %s".format(id_field)), (row_id, ),
                                 extract_function=self.object_class.from_row)
         if len(result) == 0:
             return None
         return result[0]
 
     def get_all(self):
+        """
+        Retrieves all records from a table.
+        :return: a list of parsed row objects from this store's table.
+        """
         return self.run_query(self.create_select_query(), extract_function=self.object_class.from_row)
 
     def handle_exception(self, except1, cursor, connection):
