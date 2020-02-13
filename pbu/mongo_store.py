@@ -235,7 +235,7 @@ class AbstractMongoDocument(ABC):
         :param json: the json object or dictionary from which to extract information.
         """
         if "_id" in json:
-            self.id = str(json["id"])
+            self.id = str(json["_id"])
         if "version" in json:
             self.version = json["version"]
 
@@ -248,7 +248,7 @@ class AbstractMongoDocument(ABC):
         result = {}
         if self.id is not None:
             result["_id"] = str(self.id)
-        if self.version is not None:
+        if getattr(self, "version", None) is not None:
             result["version"] = self.version
         return result
 

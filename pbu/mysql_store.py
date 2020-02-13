@@ -158,6 +158,16 @@ class AbstractMysqlStore(ABC):
             self.logger.exception("Error deleting item: {} / {}".format(_DELETE_STATEMENT.format(self.table_name, row_id)))
             self.handle_exception(except1, cursor, connection)
 
+    def get(self, row_id):
+        result = self.run_query(self.create_select_query(where_clause="id = %s"), (row_id, ),
+                                extract_function=self.object_class.from_row)
+        if len(result) == 0:
+            return None
+        return result[0]
+
+    def get_all(self):
+        return self.run_query(self.create_select_query(), extract_function=self.object_class.from_row)
+
     def handle_exception(self, except1, cursor, connection):
         """
         Handler function for database errors during execution of statements.
