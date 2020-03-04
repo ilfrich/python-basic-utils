@@ -5,7 +5,6 @@ from pbu.mongo_store import AbstractMongoDocument
 from abc import ABC, abstractmethod
 from tzlocal import get_localzone
 
-
 _DELETE_STATEMENT = "delete from {} where {}=%s"
 _SELECT_STATEMENT = "select {} from {}"
 _WHERE_STATEMENT = "{} where {}".format(_SELECT_STATEMENT, "{}")
@@ -156,7 +155,8 @@ class AbstractMysqlStore(ABC):
             cursor.execute(_DELETE_STATEMENT.format(self.table_name, id_field), (row_id,))
             self.close(cursor, connection, True)
         except (PoolError, OperationalError, BaseException) as except1:
-            self.logger.exception("Error deleting item: {} / {}".format(_DELETE_STATEMENT.format(self.table_name, row_id)))
+            self.logger.exception(
+                "Error deleting item: {} / {}".format(_DELETE_STATEMENT.format(self.table_name, row_id)))
             self.handle_exception(except1, cursor, connection)
 
     def get(self, row_id, id_field="id"):
@@ -166,7 +166,7 @@ class AbstractMysqlStore(ABC):
         :param id_field: the column name of the primary key
         :return the parsed row object or None, if the row doesn't exist
         """
-        result = self.run_query(self.create_select_query(where_clause="{} = %s".format(id_field)), (row_id, ),
+        result = self.run_query(self.create_select_query(where_clause="{} = %s".format(id_field)), (row_id,),
                                 extract_function=self.object_class.from_row)
         if len(result) == 0:
             return None
@@ -214,7 +214,7 @@ class AbstractMysqlStore(ABC):
 
         return fields
 
-    def create_select_query(self, where_clause=None):
+    def create_select_query(self, where_clause: str = None):
         """
         Returns a full query for selects adding in the fields and potential where-clause (optional)
         :param where_clause: an optional where clause (everything after the WHERE in an SQL statement)

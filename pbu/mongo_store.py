@@ -130,10 +130,10 @@ class AbstractMongoStore(ABC):
         :param doc_id: the id of the document to delete
         :return: the result of the remove operation
         """
-        return self.collection.remove(AbstractMongoStore.id_query(str(doc_id)))
+        return self.collection.delete_one(AbstractMongoStore.id_query(str(doc_id)))
 
     def delete_many(self, query):
-        return self.collection.remove(query)
+        return self.collection.delete_many(query)
 
     @staticmethod
     def list_to_json(item_list):

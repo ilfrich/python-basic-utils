@@ -13,6 +13,10 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     4. [AbstractMongoStore](#abstractmongostore) - helper and wrapper class for MongoDB access
     5. [AbstractMysqlStore](#abstractmysqlstore) - helper and wrapper class for MySQL access
     6. [BasicMonitor](#basicmonitor) - monitor class orchestrating regular operations
+4. [Functions](#functions)
+    1. [`list_to_json`](#list-to-json)
+    2. [`default_options`](#default-options)
+    
 
 ## Installation
 
@@ -311,3 +315,48 @@ monitor ID and lookup the monitor instance in the monitor cache._
 - `wait_till_midnight()` - waits till the next midnight in your machines time zone
 - `wait(exec_duration=0)` - waits for the time specified in the constructor and in case of `run_interval=True` for the 
 optional `exec_duration`, if provided.
+
+## Functions
+
+### `list_to_json`
+
+```python
+from pbu import list_to_json
+
+# assuming we have `my_store` as an instance of MongoDB store or MySQL store, you can:
+list_of_dictionaries = list_to_json(item_list=my_store.get_all())  # output is a list of dictionaries
+```
+
+This function operates on lists of objects inheriting from `AbstractMongoDocument` or `AbstractMysqlDocument` and 
+converts them into dictionaries using the `to_json()` method of any object passed into the function. Objects passed into
+the function _require_ the `to_json()` method and need to return the dictionary representation of the object. This 
+function is just a mapping shortcut.
+
+### `default_options`
+
+```python
+from pbu import default_options
+
+DEFAULTS = {
+    "a": 1,
+    "b": 2,
+    "c": 3,
+}
+
+result = default_options(default=DEFAULTS, override={"b": 4, "d": 5})
+# result is: {"a": 1, "b": 4, "c": 3, "d": 5}
+```
+
+If you want to avoid additional keys other than the keys in DEFAULTS, you can provide a third argument:
+
+```python
+from pbu import default_options
+
+DEFAULTS = {
+    "a": 1,
+    "b": 2,
+}
+
+result = default_options(default=DEFAULTS, override={"b": 4, "d": 5}, allow_unknown_keys=False)
+# result is: {"a": 1, "b": 4}
+```
