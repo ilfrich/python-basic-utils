@@ -14,8 +14,8 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     5. [AbstractMysqlStore](#abstractmysqlstore) - helper and wrapper class for MySQL access
     6. [BasicMonitor](#basicmonitor) - monitor class orchestrating regular operations
 4. [Functions](#functions)
-    1. [`list_to_json`](#list-to-json)
-    2. [`default_options`](#default-options)
+    1. [`list_to_json`](#list_to_json)
+    2. [`default_options`](#default_options)
     
 
 ## Installation
