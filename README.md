@@ -28,11 +28,10 @@ pip install pbu
 
 ## Usage
 
-If you have a requirement.txt file, you can add `pbu` (replace 0.4.0 with latest available version or omit entirely to 
-get the latest):
+***Optional***: If you have a requirement.txt file, you can add `pbu`:
 
 ```bash
-pbu==0.4.0
+pbu
 ```
 
 Then, simply import the class / module you need:
