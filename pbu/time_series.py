@@ -459,8 +459,10 @@ class TimeSeries:
         Converts the time series into a pandas DataFrame with a given time index
         :return: a pandas DataFrame with the date_time column set as the index
         """
-        df = pd.DataFrame(self.translate_to_dict_of_lists(date_format=None), index=self.get_dates())
-        del df[self.date_time_key]
+        df = pd.DataFrame(self.translate_to_dict_of_lists(date_format=None)).set_index(self.date_time_key)
+        for col in df:
+            if col != self.date_time_key:
+                df[col] = pd.to_numeric(df[col], errors='coerce')
         return df
 
     @staticmethod
