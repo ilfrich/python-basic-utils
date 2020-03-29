@@ -22,6 +22,7 @@ setup(name="pbu",
             "pymongo",
             "tzlocal",
             "requests",
+            "pandas",
       ],
       tests_require=[
           "pytest",
