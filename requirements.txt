@@ -6,3 +6,4 @@ mysql-connector-python
 pandas
 tzlocal
 requests
+pandas
