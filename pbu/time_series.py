@@ -1,5 +1,6 @@
 import math
 import pandas as pd
+from pytz import timezone
 from copy import copy
 from pbu import JSON
 from datetime import datetime, timedelta
@@ -22,7 +23,7 @@ class TimeSeries:
     resolution = None
 
     def __init__(self, input_data, date_time_key="date_time", date_format=None,
-                 time_zone=datetime.utcnow().astimezone().tzinfo):
+                 time_zone=None):
         """
         Creates a new time series instance.
         :param input_data: the input data, which should be either a list of dictionaries, containing at least a date
@@ -33,6 +34,11 @@ class TimeSeries:
         :param time_zone: optional time zone for the date time column. Will default to the current time zone of the
         machine the code is running on.
         """
+        # fallback for timezone internally, because Python older than 3.6 causes issues when importing pbu
+        self.time_zone = time_zone
+        if self.time_zone is None:
+            self.time_zone = datetime.utcnow().astimezone().tzinfo
+
         # store fields
         self.data = input_data
         self.date_time_key = date_time_key
@@ -467,7 +473,7 @@ class TimeSeries:
 
     @staticmethod
     def create_date_range(from_date, to_date=None, num_points=None, resolution=timedelta(minutes=5),
-                          include_start_date=False, time_zone=datetime.utcnow().astimezone().tzinfo):
+                          include_start_date=False, time_zone=None):
         """
         Creates a list of datetime instances in a given resolution an a given time frame.
         :param from_date: the start date for the time series
@@ -481,10 +487,15 @@ class TimeSeries:
         if num_points is not None and to_date is not None:
             raise AttributeError("Cannot provide to_date and num_points at the same time")
 
+        # internal fallback to default, to avoid import issues with old python versions
+        effective_time_zone = time_zone
+        if effective_time_zone is None:
+            effective_time_zone = datetime.utcnow().astimezone().tzinfo
+
         # localize dates
-        from_date = from_date.astimezone(time_zone)
+        from_date = from_date.astimezone(effective_time_zone)
         if to_date is not None:
-            to_date = to_date.astimezone(time_zone)
+            to_date = to_date.astimezone(effective_time_zone)
 
         # optionally offset start date
         if not include_start_date:
