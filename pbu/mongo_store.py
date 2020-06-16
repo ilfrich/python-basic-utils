@@ -186,10 +186,10 @@ class AbstractMongoStore(ABC):
             "$unset": {}
         }
         if isinstance(keys, str):
-            unset_update[keys] = 1
+            unset_update["$unset"][keys] = 1
         elif isinstance(keys, list):
             for key in keys:
-                unset_update[key] = 1
+                unset_update["$unset"][key] = 1
         return unset_update
 
     @staticmethod
