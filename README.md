@@ -13,6 +13,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     4. [AbstractMongoStore](#abstractmongostore) - helper and wrapper class for MongoDB access
     5. [AbstractMysqlStore](#abstractmysqlstore) - helper and wrapper class for MySQL access
     6. [BasicMonitor](#basicmonitor) - monitor class orchestrating regular operations
+    7. [ConstantListing](#constantlisting) - a parent class allowing to fetch attribute values from a constant class
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
     2. [`default_options`](#default_options)
@@ -314,6 +315,29 @@ monitor ID and lookup the monitor instance in the monitor cache._
 - `wait_till_midnight()` - waits till the next midnight in your machines time zone
 - `wait(exec_duration=0)` - waits for the time specified in the constructor and in case of `run_interval=True` for the 
 optional `exec_duration`, if provided.
+
+### ConstantListing
+
+Managing constants is good practice for avoiding typos. Imagine the following class:
+
+```python
+class Tags:
+    GEO = "GEO"
+    EQUIPMENT = "EQUIPMENT"
+```
+
+This allows you to just do: `Tags.GEO` allowing you to use your IDEs auto-complete, avoiding typos.
+But if you want to programmatically get **all** possible values for `Tags`, you can use `pbu`'s `ConstantListing` class:
+
+```python
+from pbu import ConstantListing
+
+class Tags(ConstantListing):
+    GEO = "GEO"
+    EQUIPMENT = "EQUIPMENT"
+
+list_of_values = Tags().get_all()  # will return ['GEO', 'EQUIPMENT']
+```
 
 ## Functions
 
