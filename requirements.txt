@@ -1,8 +1,11 @@
-pytest
+# database related
 pymongo
-pytz
 mysql-connector-python
-pandas
+
+# time zone related
+pytz
 tzlocal
-requests
+
+# general libraries
 pandas
+requests
