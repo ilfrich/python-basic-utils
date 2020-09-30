@@ -5,7 +5,7 @@ from pbu.mysql_connection import MysqlConnection
 from pbu.mysql_store import AbstractMysqlStore, AbstractMysqlDocument
 from pbu.mongo_store import AbstractMongoDocument, AbstractMongoStore
 from pbu.basic_monitor import BasicMonitor
-from pbu.default_options import default_options
+from pbu.default_options import default_options, default_value
 from pbu.constant_listing import ConstantListing
 
 list_to_json = AbstractMongoStore.list_to_json

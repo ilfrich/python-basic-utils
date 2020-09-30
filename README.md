@@ -17,6 +17,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
     2. [`default_options`](#default_options)
+    3. [`default_value`](#default_options)
     
 
 ## Installation
@@ -382,4 +383,19 @@ DEFAULTS = {
 
 result = default_options(default=DEFAULTS, override={"b": 4, "d": 5}, allow_unknown_keys=False)
 # result is: {"a": 1, "b": 4}
+```
+
+### `default_value`
+
+```python
+from pbu import default_value
+
+result = default_value(value=None, fallback=5)  # None is by default disallowed
+# result is 5
+
+result = default_value(value=0, fallback=5, disallowed=[None, 0])  # either 0 or None would return the fallback
+# result is 5
+
+result = default_value(0, 5)  # value will be used, as it doesn't match None
+# result is 0
 ```
