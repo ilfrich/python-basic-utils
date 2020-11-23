@@ -117,7 +117,7 @@ class Logger(logging.Logger):
         self._logger.warning(msg, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
-        self._logger.error(msg, exc_info=True, *args, **kwargs)
+        self._logger.error(msg, stack_info=True, exc_info=True, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
         self._logger.debug(msg, *args, **kwargs)
