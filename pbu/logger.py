@@ -25,16 +25,19 @@ class _CustomHttpHandler(logging.Handler):
         """
         result = record.__dict__
         if "exc_info" in result and result["exc_info"] is not None:
+            trace = []
             for el in result["exc_info"]:
                 if type(el).__name__ == "traceback":
                     # custom traceback logging, because we can't serialise this
                     stack = traceback.extract_stack()
                     for err_line in stack[:-9]:
-                        print("    {}:{} {}".format(err_line.filename, err_line.lineno, err_line.name))
-                        print("        {}".format(err_line.line))
+                        trace.append("    {}:{} {}".format(err_line.filename, err_line.lineno, err_line.name))
+                        trace.append("        {}".format(err_line.line))
                     for err_line in traceback.format_tb(el):
-                        print("    {}".format(err_line.strip()))
+                        trace.append("    {}".format(err_line.strip()))
             del result["exc_info"]
+            if len(trace) > 0:
+                result["trace"] = trace
         if "msg" in result and not isinstance(result["msg"], str):
             result["msg"] = str(result["msg"])
         return result
@@ -65,6 +68,7 @@ class Logger(logging.Logger):
     >>> logger = Logger("some-name")
     >>> logger.info("My message")
     """
+
     def __init__(self, name, log_folder=None, enable_logger_name=True, enabled_log_levels=[logging.INFO, logging.ERROR],
                  message_format="%(asctime)s %(levelname)s:%(name)s %(message)s"):
         """
@@ -82,6 +86,10 @@ class Logger(logging.Logger):
 
         self.is_worker = self.log_server is not None
 
+        if log_folder is not None:
+            if not os.path.isdir(log_folder):
+                os.makedirs(log_folder)
+
         # check if other handlers are provided
         if not logger.handlers:
             if self.is_worker:
@@ -93,10 +101,11 @@ class Logger(logging.Logger):
                 if os.getenv(CONFIG_KEY_LOG_FOLDER) is not None and log_folder is None:
                     log_folder = os.getenv(CONFIG_KEY_LOG_FOLDER)
                 if log_folder is None:
-                    self._configure_listener(logger,message_format,  enable_logger_name=enable_logger_name,
+                    self._configure_listener(logger, message_format, enable_logger_name=enable_logger_name,
                                              enabled_log_levels=enabled_log_levels)
                 else:
-                    self._configure_listener(logger, message_format, log_folder=log_folder, enable_logger_name=enable_logger_name,
+                    self._configure_listener(logger, message_format, log_folder=log_folder,
+                                             enable_logger_name=enable_logger_name,
                                              enabled_log_levels=enabled_log_levels)
 
         self._logger = logger
@@ -108,7 +117,7 @@ class Logger(logging.Logger):
         self._logger.warning(msg, *args, **kwargs)
 
     def error(self, msg, *args, **kwargs):
-        self._logger.error(msg, *args, **kwargs)
+        self._logger.error(msg, exc_info=True, *args, **kwargs)
 
     def debug(self, msg, *args, **kwargs):
         self._logger.debug(msg, *args, **kwargs)
@@ -117,7 +126,7 @@ class Logger(logging.Logger):
         self._logger.info(msg, *args, **kwargs)
 
     def exception(self, msg):
-        self._logger.exception(msg)
+        self._logger.exception(msg, stack_info=True)
 
     def handle(self, record):
         self._logger.handle(record)
@@ -148,6 +157,8 @@ class Logger(logging.Logger):
 
         for log_level in enabled_log_levels:
             file_name = os.path.join(log_folder, file_names[log_level])
+            if not os.path.isdir(log_folder):
+                os.makedirs(log_folder)
             handler = handlers.TimedRotatingFileHandler(file_name, when="d", interval=1, backupCount=30)
             handler.setFormatter(formatter)
             handler.setLevel(log_level)
