@@ -14,6 +14,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     5. [AbstractMysqlStore](#abstractmysqlstore) - helper and wrapper class for MySQL access
     6. [BasicMonitor](#basicmonitor) - monitor class orchestrating regular operations
     7. [ConstantListing](#constantlisting) - a parent class allowing to fetch attribute values from a constant class
+    8. [PerformanceLogger](#performancelogger) - a utility class to log runtime performance of processes
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
     2. [`default_options`](#default_options)
@@ -339,6 +340,49 @@ class Tags(ConstantListing):
 
 list_of_values = Tags().get_all()  # will return ['GEO', 'EQUIPMENT']
 ```
+
+### PerformanceLogger
+
+This utility class allows to print out or log runtime performance expressed as time delta between a start time and an 
+end time.
+
+Basic usage:
+
+```python
+from pbu import PerformanceLogger
+
+perf = PerformanceLogger()
+perf.start()  # this is optional and will reset the start-time
+# do something useful...
+perf.checkpoint(message="Step 1")  # will print "Step 1 took <timedelta>
+# some some more useful stuff...
+perf.finish(message="Something useful")  # will print out the whole duration from start to finish
+```
+
+You can omit the message of a `checkpoint` call if you don't need an output for an operation, but want to print out the 
+duration of the step that follows.
+
+You can also use a Python `Logger` object (or `pbu.Logger`) instead of the message being printed out onto the console.
+
+```python
+from pbu import Logger, PerformanceLogger
+
+logger = Logger("my-logger-name")
+perf = PerformanceLogger()
+# do something...
+perf.checkpoint()  # next output will print the duration between this point and the next checkpoint call
+# do some more stuff...
+perf.checkpoint(message="Some More Stuff", logger=logger)
+# and even more ...
+perf.finish(message="Total operation", logger=logger)
+```
+
+**Methods**
+
+- `start()` - will reset the start time of the performance logger
+- `checkpoint(message=None, logger=None)` - creates a new checkpoint and optionally logs a message
+- `finish(message=None, logger=None)` - prints out the total runtime since `start()` was called or the class was 
+ initialised 
 
 ## Functions
 
