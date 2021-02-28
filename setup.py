@@ -16,12 +16,12 @@ setup(name="pbu",
           "pbu"
       ],
       install_requires=[
-            "mysql-connector-python",
-            "pytz",
-            "pymongo",
-            "tzlocal",
-            "requests",
-            "pandas",
+          "mysql-connector-python",
+          "pytz",
+          "pymongo",
+          "tzlocal",
+          "requests",
+          "pandas",
       ],
       tests_require=[
           "pytest",
