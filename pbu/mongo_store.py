@@ -1,4 +1,5 @@
 import pymongo
+from typing import Optional
 from bson import ObjectId
 from abc import ABC, abstractmethod
 from pbu.logger import Logger
@@ -229,7 +230,7 @@ class AbstractMongoDocument(ABC):
             self.id = str(self.id)
         self.version = data_model_version
 
-    def extract_system_fields(self, json):
+    def extract_system_fields(self, json: dict):
         """
         Extracts the id and version from a JSON object or dictionary and maps them to the current instances attributes.
         :param json: the json object or dictionary from which to extract information.
@@ -239,8 +240,17 @@ class AbstractMongoDocument(ABC):
         if "version" in json:
             self.version = json["version"]
 
-    @abstractmethod
-    def to_json(self):
+        # check if the get_attribute_mapping method is overridden
+        attr_mapping = self._get_attribute_mapping()
+        if attr_mapping is None:
+            return
+
+        # evaluate attribute mapping
+        for key in attr_mapping:
+            if attr_mapping[key] in json:
+                self.__setattr__(key, json[attr_mapping[key]])
+
+    def to_json(self) -> dict:
         """
         Returns a serializable representation of this document as dictionary or JSON object.
         :return: a dictionary or JSON object providing the data contained within this document
@@ -250,14 +260,47 @@ class AbstractMongoDocument(ABC):
             result["_id"] = str(self.id)
         if getattr(self, "version", None) is not None:
             result["version"] = self.version
+
+        attr_mapping = self._get_attribute_mapping()
+        if attr_mapping is not None:
+            for key in attr_mapping:
+                if self.__getattribute__(key) is not None:
+                    result[attr_mapping[key]] = self.__getattribute__(key)
+
         return result
 
     @staticmethod
     @abstractmethod
-    def from_json(json):
+    def from_json(json: dict):
         """
         Receives a dictionary or JSON object and returns an instance of this MongoDocument sub-class.
         :param json: a dictionary or JSON object instance
         :return: an instance of a sub-class of MongoDocument
         """
         pass
+
+    def get_attribute_mapping(self) -> dict:
+        """
+        Provides a mapping from internal attribute names to JSON attribute names.
+        """
+        pass
+
+    def _get_attribute_mapping(self) -> Optional[dict]:
+        """
+        Internal method used to find out if the sub-class defines an attribute mapping. If the sub-class defines an
+        attribute mapping and returns a dictionary, the attribute mapping will be returned. Otherwise None will be
+        returned, which will be used by the to_json and extract_system_fields method to map all primitive fields from
+        the de-serialised class to JSON and back.
+        """
+        # find out if the sub-class defines the method
+        defining_class = self.get_attribute_mapping.__func__.__qualname__.split(".")[0]
+        if defining_class == "AbstractMongoDocument":
+            return None
+
+        # check if the sub-class method returns a dictionary
+        attr_mapping = self.get_attribute_mapping()
+        if not isinstance(attr_mapping, dict):
+            return None
+
+        # mapping provided by sub-class, return it
+        return attr_mapping

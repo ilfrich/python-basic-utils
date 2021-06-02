@@ -228,7 +228,38 @@ store.update(AbstractMongoStore.id_query(doc_id),
 
 # returns a list of MyObjectType objects matching the version
 list_of_results = store.query({ "version": 5 })
-``` 
+```
+
+As of version 0.7.0 a new feature provides an easier way to map between class attributes and JSON attributes. For 
+ primitive field mappings, we can use the built-in methods `to_json()` and `extract_system_fields(json)` to serialise
+ and de-serialise the attributes / keys provided by the `get_attribute_mapping()` method. The `to_json()` method no 
+ longer has to be provided.
+
+This feature is backward-compatible. If the `get_attribute_mapping()` method is not available, the old mechanism using
+ `to_json()` and `from_json()` still works as before.
+
+```python
+from pbu import AbstractMongoDocument
+
+class MyObjectType(AbstractMongoDocument):
+    def __init__(self):
+        super().__init__()
+        self.attribute_name_1 = None
+        self.attribute_2 = None
+
+    def get_attribute_mapping(self):
+        # provide a mapping from the class attribute to the JSON key
+        return {
+           "attribute_name_1": "attributeName1",
+           "attribute_2": "attribute2",
+        }
+    
+    @staticmethod
+    def from_json(json):
+        obj = MyObjectType()
+        obj.extract_system_fields(json)
+        return obj
+```
 
 ### BasicMonitor
 
