@@ -230,6 +230,8 @@ store.update(AbstractMongoStore.id_query(doc_id),
 list_of_results = store.query({ "version": 5 })
 ```
 
+**Attribute Mapping**
+
 As of version 0.7.0 a new feature provides an easier way to map between class attributes and JSON attributes. For 
  primitive field mappings, we can use the built-in methods `to_json()` and `extract_system_fields(json)` to serialise
  and de-serialise the attributes / keys provided by the `get_attribute_mapping()` method. The `to_json()` method no 
@@ -260,6 +262,36 @@ class MyObjectType(AbstractMongoDocument):
         obj.extract_system_fields(json)
         return obj
 ```
+
+**Sorting and Pagination**
+
+As of version 0.7.1 a new feature was added to the `query()` method to support sorting and pagination.
+
+The signature of `query(query)` was extended to `query(query, sorting=None, paging=None)`, so it is backward compatible.
+- The sorting can be provided as single string or as dictionary.
+- The paging can be provided as `PagingInformation` object.
+
+_Sorting_
+
+- `store.query(query, sorting="date")` will sort by the key "date" in ascending order
+- `store.query(query, sorting={"date": "desc"})` will sort by the key "date" in descending order
+- `store.query(query, sorting={"date": 1})` will sort by the key "date" in ascending order
+- `store.query(query, sorting={"date": 1, "time": "DESCENDING"})` will first sort by the key "date" in ascending order 
+  and then by the key "time" in descending order
+- Any string starting with "asc" or "desc" (case-insensitive) is supported. You can also provide an integer, where 1 is 
+  ascending and -1 is descending.
+  
+_Paging_
+
+```python
+from pbu import PagingInformation
+
+search_query = {"customer": "Max"}
+# store is an instance of a sub-class of AbstractMongoStore
+result = store.query(search_query, paging=PagingInformation(page=5, page_size=50))`
+```
+
+The first `page` is page 0, the default `page_size` is 25. 
 
 ### BasicMonitor
 
