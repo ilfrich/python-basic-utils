@@ -19,7 +19,7 @@ class AbstractMongoDocument(ABC):
         if self.id is not None and not isinstance(self.id, str):
             # convert ObjectId to str
             self.id = str(self.id)
-        self.version = data_model_version
+        self.data_model_version = data_model_version
 
     def extract_system_fields(self, json: dict):
         """
@@ -28,8 +28,8 @@ class AbstractMongoDocument(ABC):
         """
         if "_id" in json:
             self.id = str(json["_id"])
-        if "version" in json:
-            self.version = json["version"]
+        if "dataModelVersion" in json:
+            self.data_model_version = json["dataModelVersion"]
 
         # check if the get_attribute_mapping method is overridden
         attr_mapping = self._get_attribute_mapping()
@@ -49,8 +49,8 @@ class AbstractMongoDocument(ABC):
         result = {}
         if self.id is not None:
             result["_id"] = str(self.id)
-        if getattr(self, "version", None) is not None:
-            result["version"] = self.version
+        if getattr(self, "data_model_version", None) is not None:
+            result["dataModelVersion"] = self.data_model_version
 
         attr_mapping = self._get_attribute_mapping()
         if attr_mapping is not None:
@@ -150,8 +150,8 @@ class AbstractMongoStore(ABC):
             document = document.to_json()
 
         if isinstance(document, dict):
-            if "version" in document:
-                document["version"] = self.data_model_version
+            if "dataModelVersion" not in document and self.data_model_version is not None:
+                document["dataModelVersion"] = self.data_model_version
             return str(self.collection.insert_one(document).inserted_id)
         raise ValueError("Provided document needs to be a dict or provide a to_json() method")
 
@@ -261,6 +261,8 @@ class AbstractMongoStore(ABC):
             if getattr(document, "to_json", None) is None:
                 raise ValueError("Provided document needs to be a dict or have a to_json method.")
             document = document.to_json()
+            if "dataModelVersion" not in document and self.data_model_version is not None:
+                document["dataModelVersion"] = self.data_model_version
         return self.update_one(AbstractMongoStore.id_query(document["_id"]),
                                AbstractMongoStore.set_update_full(document))
 
