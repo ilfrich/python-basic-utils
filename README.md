@@ -19,6 +19,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     1. [`list_to_json`](#list_to_json)
     2. [`default_options`](#default_options)
     3. [`default_value`](#default_options)
+    4. [Datetime Functions](#datetime-functions)
     
 
 ## Installation
@@ -505,4 +506,53 @@ result = default_value(value=0, fallback=5, disallowed=[None, 0])  # either 0 or
 
 result = default_value(0, 5)  # value will be used, as it doesn't match None
 # result is 0
+```
+
+
+### Datetime Functions
+
+PBU provides some utilities to help deal with timezones and datetime objects. All timezone specifications can be made 
+either as a string (i.e. the name of the timezone, like `"Australia/Melbourne"`) or as `pytz.timezone` object. 
+
+#### `combine_date_time(date, time, tz)`
+
+Combines the provided date and time values.
+
+```python
+from datetime import date, time
+from pbu import combine_date_time
+
+result = combine_date_time(date(year=2021, month=12, day=25), time(hour=15, minute=12, second=6), "Australia/Perth")
+```
+
+#### `to_timezone(local_datetime, target_tz)`
+
+Translates a datetime to the provided target timezone.
+
+```python
+from datetime import datetime
+from pytz import utc
+from pbu import to_timezone
+
+utc_dt = datetime(year=2021, month=12, day=25, hour=3, minute=0, tzinfo=utc)  # 3:00am @ 2021-12-25
+perth_dt = to_timezone(utc_dt, "Australia/Perth") 
+# > Result: 11:00am @ 2021-12-25 (+0800)
+```
+
+#### `to_utc(local_datetime)`
+
+Shorthand for `to_timezone(dt, pytz.utc)`
+
+#### `set_timezone(datetime, target_timezone)`
+
+Simply replaces the timezone information without changing any of the time values of the datetime.
+
+```python
+from datetime import datetime
+from pytz import utc, timezone
+from pbu import set_timezone
+
+utc_dt = datetime(year=2021, month=12, day=25, hour=3, minute=0, tzinfo=utc)  # 3:00am @ 2021-12-25
+perth_dt = set_timezone(utc_dt, timezone("Australia/Perth"))  
+# > Result: 3:00am @ 2021-12-25 (+0800)
 ```
