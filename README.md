@@ -20,6 +20,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     2. [`default_options`](#default_options)
     3. [`default_value`](#default_options)
     4. [Datetime Functions](#datetime-functions)
+    5. [`weighted_mean`](#weighted_mean)
     
 
 ## Installation
@@ -555,4 +556,16 @@ from pbu import set_timezone
 utc_dt = datetime(year=2021, month=12, day=25, hour=3, minute=0, tzinfo=utc)  # 3:00am @ 2021-12-25
 perth_dt = set_timezone(utc_dt, timezone("Australia/Perth"))  
 # > Result: 3:00am @ 2021-12-25 (+0800)
+```
+
+### `weighted_mean`
+
+```python
+from pbu import weighted_mean
+
+weights = [5, 3, 1]
+values = [10, 5, 5, 4, 3]
+
+# ((10 * 5) + (3 * 5) + (1 * 5) + 4 + 3) / (5 + 3 + 1) = 7.0
+wm = weighted_mean(values, weights)  # 7.0
 ```
