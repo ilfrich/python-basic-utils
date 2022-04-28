@@ -2,6 +2,9 @@ from pytz import timezone, utc, BaseTzInfo
 from datetime import datetime, date, time
 from typing import Union, Optional
 
+DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
+DATE_FORMAT = "%Y-%m-%d"
+
 
 def to_timezone(localized_datetime: datetime, target_timezone: Union[BaseTzInfo, str]) -> datetime:
     """
