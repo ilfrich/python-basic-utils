@@ -131,6 +131,14 @@ class Logger(logging.Logger):
     def handle(self, record):
         self._logger.handle(record)
 
+    def get_handler(self):
+        if len(self._logger.handlers) == 0:
+            return None
+        return self._logger.handlers[0]
+
+    def __repr__(self):
+        return self._logger.__repr__()
+
     @staticmethod
     def _configure_worker(logger, url, message_format, auth=None, enabled_log_levels=[logging.INFO, logging.ERROR]):
         for log_level in enabled_log_levels:
