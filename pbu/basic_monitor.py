@@ -9,7 +9,7 @@ class BasicMonitor(ABC):
     Abstract base class (ABC) for all monitors containing base functionality for lifecycle and meta information.
     """
 
-    def __init__(self, monitor_id, wait_time, run_interval=False, custom_logger=None):
+    def __init__(self, monitor_id, wait_time, run_interval=False, custom_logger=None, ping_interval=60):
         """
         Super constructor invoked from implementing sub-classes of this class
         providing interfaces start, track_success and track_error
@@ -22,6 +22,7 @@ class BasicMonitor(ABC):
         # store parameters
         self.monitor_id = monitor_id
         self.wait_time = wait_time
+        self.ping_interval = ping_interval
         self.run_interval = run_interval
 
         # init logger
@@ -29,6 +30,12 @@ class BasicMonitor(ABC):
             self.logger = custom_logger
         else:
             self.logger = Logger(self.__class__.__name__)
+        # handle ping interval issues
+        if wait_time < ping_interval:
+            self.logger.info(f"WARNING, monitor wait time {ping_interval} is longer than {wait_time} - overriding")
+            self.ping_interval = wait_time
+        # runtime variables
+        self.next_execution = 0
 
     @abstractmethod
     def running(self):
@@ -60,10 +67,28 @@ class BasicMonitor(ABC):
         takes into account the execution time of the last loop, if run_interval is True.
         :param exec_duration: the execution time of the last execution loop (only relevant for run_interval=True)
         """
+        now = time.time()
+        # set next execution
         if self.run_interval:
-            time.sleep(max(1, self.wait_time - exec_duration))
+            gap_next = max(1, self.wait_time - exec_duration)
+            if gap_next < self.ping_interval:
+                # special handling if next execution is sooner than ping interval
+                time.sleep(gap_next)
+                return  # exit after wait
+            self.next_execution = now + gap_next
         else:
-            time.sleep(self.wait_time)
+            self.next_execution = now + self.wait_time
+
+        # check every ping interval if we're close to next execution
+        while time.time() + self.ping_interval < self.next_execution:
+            time.sleep(self.ping_interval)
+
+        # wait remaining time
+        remaining = round(self.next_execution - time.time())
+        if remaining > 0:
+            time.sleep(remaining)
+        if remaining < 0:
+            self.logger.info(f"Overdue execution by {-round(remaining)}s")
 
     def wait_till_midnight(self):
         """

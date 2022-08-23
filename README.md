@@ -346,8 +346,14 @@ class MyRegularOwnMonitor(BasicMonitor):
             self.wait(exec_duration=round(time() - start_ts))  # include the execution duration
 ```
 
-You can also pass a custom logger as `custom_logger` argument to the constructor. By default it will use the
-`pbu.Logger` and log major events such as start/stop/restart and errors.
+**Optional constructor parameters**
+
+- You can also pass a custom logger as `custom_logger` argument to the constructor. By default it will use the
+ `pbu.Logger` and log major events such as start/stop/restart and errors.
+- Passing a `ping_interval` parameter allows you to check for overdue jobs more often than the wait time. For example
+ you could have a `wait_time` of 1800s (30 min) and a `ping_interval` of 60s, which allows you to not miss out on an 
+ execution if your machine running the monitor should sleep (e.g. on a laptop when you put it on standby, the sleep 
+ timer stops). By default this is `60` seconds (or the `wait_time`, if the `wait_time` is lower than 60s)
 
 **Manage and run monitor**
 
