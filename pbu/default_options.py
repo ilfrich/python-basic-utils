@@ -71,4 +71,4 @@ def list_map_filter(item_list: List[Any], filter_func: Callable, map_func: Calla
     if filter_first:
         return list(map(map_func, list(filter(filter_func, item_list))))
 
-    return list(filter(map_func, list(map(filter_func, item_list))))
+    return list(filter(filter_func, list(map(map_func, item_list))))
