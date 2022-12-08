@@ -1,4 +1,5 @@
 import pymongo
+import warnings
 from typing import Optional, Union, List, Any, Type
 from bson import ObjectId
 from abc import ABC, abstractmethod
@@ -96,6 +97,25 @@ class AbstractMongoDocument(ABC):
 
         # mapping provided by sub-class, return it
         return attr_mapping
+
+
+    def apply_updates(self, update, attributes: List[str] = []):
+        """
+        Applies an update (which has to be of the same type as self) to the current instance. The list of attributes
+        past will be checked, if they are available.
+        :param update: an instancee of the same type as self
+        :param attributes: a list of strings representing the attributes to update (see get_attribute_mapping)
+        :raises ValueError: in case the provided `update` is an instance of a different class than self.
+        """
+        if not isinstance(update, type(self)):
+            raise ValueError("Provided `update` parameter has a different type than `self`")
+        if update is None:
+            return
+        for attr in attributes:
+            if hasattr(self, attr) and hasattr(update, attr):
+                self.__setattr__(attr, getattr(update, attr))
+            else:
+                warnings.warn(f"Trying to update attribute '{attr}' but either the item or the update does not have it")
 
 
 class PagingInformation:

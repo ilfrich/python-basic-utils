@@ -1,7 +1,7 @@
 import time
 from datetime import datetime
 from abc import ABC, abstractmethod
-from pbu import Logger
+from pbu.logger import Logger
 
 
 class BasicMonitor(ABC):

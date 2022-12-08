@@ -4,16 +4,18 @@ from dotenv import load_dotenv
 
 
 class BasicConfig:
-    def __init__(self, default_values: Dict[str, Any] = {}, directory_keys: List[str] = [], required: List[str] = []):
+    def __init__(self, default_values: Dict[str, Any] = {}, directory_keys: List[str] = [], required: List[str] = [],
+                 env_file=".env"):
         self.config = {}
         self.default_values = default_values
         self.directory_keys = directory_keys
         self.required_keys = required
+        self._env_file = env_file
         self._load_config()
 
     def _load_config(self):
         # read out existing os environment
-        load_dotenv()
+        load_dotenv(self._env_file)
         self.config = {}
 
         # apply defaults for missing config params

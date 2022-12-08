@@ -270,6 +270,41 @@ class MyObjectType(AbstractMongoDocument):
         return obj
 ```
 
+The `AbstractMongoDocument` class also provides a method `apply_updates(update, attributes: List[str] = [])`, which 
+ allows to apply an update to the document with another object of the same class. If attribute names are listed that do
+ not exist, a warning will be shown. If the provided `update` instance is of a different type than `self`, a 
+ `ValueError` will be raised. This method is useful for update operations executed via an API call to your application.
+
+```python
+from pbu import AbstractMongoDocument
+class TypeA(AbstractMongoDocument):
+    def __init__(self):
+        super().__init__()
+        self.name: str = None
+        self.count: int = 0
+        self.is_valid: bool = False
+
+a1 = TypeA()
+a1.name = "Hello"
+a1.count = 5
+a1.is_valid = True
+
+a2 = TypeA()
+a2.name = "World"
+a2.count = 10
+a2.is_valid = False
+
+# only apply updates for `name` and `count`
+a1.apply_updates(a2, ["name", "count"])
+
+result = a1.name
+# result is "World"
+result = a1.count
+# result is 10
+result = a1.is_valid
+# result is True
+```
+
 **Sorting and Pagination**
 
 As of version 0.7.1 a new feature was added to the `query()` method to support sorting and pagination.
@@ -516,8 +551,9 @@ class Config(BasicConfig):
 
 
 cfg = Config()
-if os.path.exists(cfg.get_data_directory()):
-    print("yo")  # config will ensure the directory exists
+# BasicConfig will ensure the directory exists
+result = os.path.exists(cfg.get_data_directory())
+# result is True      
 ```
 
 **Methods**
@@ -526,8 +562,8 @@ if os.path.exists(cfg.get_data_directory()):
   as it should already be provided in the `default_values` of the constructor. If a `config_key` hasn't been provided by 
   the `default_values` of the constructor, this will trigger reading the value fresh from the environment and storing it
   within this class. 
-- `__init__(default_values={}, directory_keys=[], required=[])` - super constructor, which will be used to load the 
- initial environment. 
+- `__init__(default_values={}, directory_keys=[], required=[], env_file=".env")` - super constructor, which will be used
+  to load the initial environment. 
   - The `default_values` provide the keys that will be extracted from the OS environment.
   - The `directory_keys` are config keys that will be used to run a directory check. If the provided environment value
     refers to a directory that doesn't exist yet, the class will attempt to create it.

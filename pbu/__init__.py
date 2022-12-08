@@ -1,4 +1,4 @@
-from pbu.json import JSON
+from pbu.json_wrapper import JSON
 from pbu.logger import Logger
 from pbu.time_series import TimeSeries
 from pbu.mysql_connection import MysqlConnection

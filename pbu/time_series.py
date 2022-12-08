@@ -1,7 +1,7 @@
 import math
 import pandas as pd
 from copy import copy
-from pbu import JSON
+from pbu.json_wrapper import JSON
 from datetime import datetime, timedelta
 
 DEFAULT_DATE_FORMAT = "%Y-%m-%d %H:%M:%S"
