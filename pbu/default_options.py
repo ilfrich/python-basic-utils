@@ -1,7 +1,7 @@
-from typing import Any, List
+from typing import Any, List, Optional, Callable
 
 
-def default_options(default: dict = {}, override: dict = None, allow_unknown_keys: bool = True):
+def default_options(default: dict = {}, override: dict = None, allow_unknown_keys: bool = True) -> dict:
     """
     Combines the dictionaries provided as parameters into one, where keys in override will replace keys in default.
     The inputs are not mutated.
@@ -39,3 +39,20 @@ def default_value(value: Any, fallback: Any, disallowed: List[Any] = [None]) -> 
         return fallback
 
     return value
+
+
+def list_find_one(filter_func: Callable, item_list: List[Any]) -> Optional[Any]:
+    """
+    Finds the first item in the list that matches the filter function.
+    :param filter_func: a lambda used to filter items in the item_list
+    :param item_list: a list of items to check against
+    :return: the first item in the list that matches the filter function or None, if no item matches.
+    """
+    if item_list is None or not isinstance(item_list, list) or len(item_list) == 0:
+        return None
+
+    filtered = list(filter(filter_func, item_list))
+    if len(filtered) == 0:
+        return None
+
+    return filtered[0]

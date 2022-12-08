@@ -20,9 +20,10 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     1. [`list_to_json`](#list_to_json)
     2. [`default_options`](#default_options)
     3. [`default_value`](#default_options)
-    4. [Datetime Functions](#datetime-functions)
-    5. [`weighted_mean`](#weighted_mean)
-    6. [`normalise`](#normalise)
+    4. [`list_find_one`](#listfindone)
+    5. [Datetime Functions](#datetime-functions)
+    6. [`weighted_mean`](#weighted_mean)
+    7. [`normalise`](#normalise)
 
 ## Installation
 
@@ -591,6 +592,23 @@ result = default_value(value=0, fallback=5, disallowed=[None, 0])  # either 0 or
 
 result = default_value(0, 5)  # value will be used, as it doesn't match None
 # result is 0
+```
+
+### `list_find_one`
+
+Finds the first item in a list that matches the filter function - this is a shortcut for running `filter(..)` on a list,
+ then checking its length and if the length is > 0 fetching the first item.
+
+```python
+from pbu import list_find_one
+
+mylist = ["a", "b", "c"]
+
+res_1 = list_find_one(lambda x: x == "c", mylist)  
+# result is "c"
+
+res_2 = list_find_one(lambda x: x == "d", mylist)  
+# result is None
 ```
 
 ### Datetime Functions
