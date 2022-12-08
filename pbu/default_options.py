@@ -56,3 +56,19 @@ def list_find_one(filter_func: Callable, item_list: List[Any]) -> Optional[Any]:
         return None
 
     return filtered[0]
+
+
+def list_map_filter(item_list: List[Any], filter_func: Callable, map_func: Callable, filter_first=True) -> List[Any]:
+    """
+    Shortcut function for mapping and filtering a list of items.
+    :param item_list: a list of items to filter and map
+    :param filter_func: the filter lambda
+    :param map_func: the map lambda
+    :param filter_first: a boolean flag whether we call filter first and then map (True) or map first and then filter
+    (False)
+    :return: the result of the filter + map operation cast to a list
+    """
+    if filter_first:
+        return list(map(map_func, list(filter(filter_func, item_list))))
+
+    return list(filter(map_func, list(map(filter_func, item_list))))

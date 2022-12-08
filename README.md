@@ -602,13 +602,35 @@ Finds the first item in a list that matches the filter function - this is a shor
 ```python
 from pbu import list_find_one
 
-mylist = ["a", "b", "c"]
+my_list = ["a", "b", "c"]
 
-res_1 = list_find_one(lambda x: x == "c", mylist)  
+result = list_find_one(lambda x: x == "c", my_list)  
 # result is "c"
 
-res_2 = list_find_one(lambda x: x == "d", mylist)  
+result = list_find_one(lambda x: x == "d", my_list)  
 # result is None
+```
+
+### `list_map_filter`
+
+A shorthand for filtering and mapping a lsit of items. The function allows to pass both lambdas (`filter` and `map`)
+ into one function call. A boolean flag (`filter_first=True`) decides whether the filter or map operation is called 
+ first. 
+
+```python
+from pbu import list_map_filter
+
+my_list = [
+    {"name": "a", "count": 5},
+    {"name": "b", "count": 100},
+    {"name": "b", "count": 32},
+]
+
+result = list_map_filter(my_list, filter_func=lambda x: x["count"] % 5 == 0, map_func=lambda x: x["name"])
+# result is ["a", "b"]
+
+result = list_map_filter(my_list, filter_func=lambda x: x > 50, map_func=lambda x: x["count"], filter_first=False)
+# result is [100]
 ```
 
 ### Datetime Functions
