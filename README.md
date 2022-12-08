@@ -15,6 +15,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     6. [BasicMonitor](#basicmonitor) - monitor class orchestrating regular operations
     7. [ConstantListing](#constantlisting) - a parent class allowing to fetch attribute values from a constant class
     8. [PerformanceLogger](#performancelogger) - a utility class to log runtime performance of processes
+    9. [BasicConfig](#basicconfig) - application utility class managing access to environment variables
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
     2. [`default_options`](#default_options)
@@ -463,6 +464,55 @@ perf.finish(message="Total operation", logger=logger)
 - `checkpoint(message=None, logger=None)` - creates a new checkpoint and optionally logs a message
 - `finish(message=None, logger=None)` - prints out the total runtime since `start()` was called or the class was
   initialised
+
+### `BasicConfig`
+
+This class can be used in applications to simplify access to environment variables. It is recommended to write your own
+ sub-class of this class, where you can provide even more convenient access. However, the class can also be used 
+ standalone.
+
+Basic usage:
+
+```python
+import os
+from pbu import BasicConfig
+
+class Config(BasicConfig):
+    def __init__(self):
+        super().__init__(default_values={
+            "PORT": 5000,
+            "IS_DEBUG": 1,
+            "DATA_DIRECTORY": None,
+        }, directory_keys=["DATA_DIRECTORY"], required=["DATA_DIRECTORY"])
+        
+    def get_port(self) -> int:
+        return int(self.get_config_value("port"))
+    
+    def is_debug(self) -> bool:
+        return int(self.get_config_value("is_debug")) == 1
+    
+    def get_data_directory(self) -> str:
+        return self.get_config_value("DATA_DIRECTORY")
+
+
+cfg = Config()
+if os.path.exists(cfg.get_data_directory()):
+    print("yo")  # config will ensure the directory exists
+```
+
+**Methods**
+
+- `get_config_value(config_key, default_value=None)` - retrieves a config value, the default value override is optional
+  as it should already be provided in the `default_values` of the constructor. If a `config_key` hasn't been provided by 
+  the `default_values` of the constructor, this will trigger reading the value fresh from the environment and storing it
+  within this class. 
+- `__init__(default_values={}, directory_keys=[], required=[])` - super constructor, which will be used to load the 
+ initial environment. 
+  - The `default_values` provide the keys that will be extracted from the OS environment.
+  - The `directory_keys` are config keys that will be used to run a directory check. If the provided environment value
+    refers to a directory that doesn't exist yet, the class will attempt to create it.
+  - The `required` parameter provides environment keys that have to be provided by the OS environment. If they are not
+    available in the environment, an `EnvironmentError` will be raised.
 
 ## Functions
 

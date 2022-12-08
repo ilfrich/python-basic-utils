@@ -10,5 +10,6 @@ from pbu.constant_listing import ConstantListing
 from pbu.performance_logger import PerformanceLogger
 from pbu.date_time import combine_date_time, to_utc, to_timezone, set_timezone, DATE_FORMAT, DATETIME_FORMAT
 from pbu.datascience_util import weighted_mean, normalise
+from pbu.app_config import BasicConfig
 
 list_to_json = AbstractMongoStore.list_to_json

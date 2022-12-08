@@ -4,7 +4,7 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(name="pbu",
-      version="0.7.8",
+      version="0.7.9",
       description="Basic Utility module for the Python programming language",
       long_description=long_description,
       long_description_content_type="text/markdown",
@@ -22,6 +22,7 @@ setup(name="pbu",
           "tzlocal",
           "requests",
           "pandas",
+          "python-dotenv",
       ],
       tests_require=[
           "pytest",

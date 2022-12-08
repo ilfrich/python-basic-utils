@@ -9,3 +9,4 @@ tzlocal
 # general libraries
 pandas
 requests
+python-dotenv
