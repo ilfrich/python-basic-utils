@@ -20,10 +20,11 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     1. [`list_to_json`](#list_to_json)
     2. [`default_options`](#default_options)
     3. [`default_value`](#default_options)
-    4. [`list_find_one`](#listfindone)
-    5. [Datetime Functions](#datetime-functions)
-    6. [`weighted_mean`](#weighted_mean)
-    7. [`normalise`](#normalise)
+    4. [`list_find_one`](#list_find_one)
+    5. [`list_map_filter`](#list_map_filter)
+    6. [Datetime Functions](#datetime-functions)
+    7. [`weighted_mean`](#weighted_mean)
+    8. [`normalise`](#normalise)
 
 ## Installation
 
