@@ -22,9 +22,10 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     3. [`default_value`](#default_options)
     4. [`list_find_one`](#list_find_one)
     5. [`list_map_filter`](#list_map_filter)
-    6. [Datetime Functions](#datetime-functions)
-    7. [`weighted_mean`](#weighted_mean)
-    8. [`normalise`](#normalise)
+    6. [`list_join`](#list_join)
+    7. [Datetime Functions](#datetime-functions)
+    8. [`weighted_mean`](#weighted_mean)
+    9. [`normalise`](#normalise)
 
 ## Installation
 
@@ -669,6 +670,27 @@ result = list_map_filter(my_list, filter_func=lambda x: x["count"] % 5 == 0, map
 result = list_map_filter(my_list, filter_func=lambda x: x > 50, map_func=lambda x: x["count"], filter_first=False)
 # result is [100]
 ```
+
+### `list_join`
+
+A helper function that joins a list with a given token. The Python default way for joining a list of items uses the join
+ token (e.g. ",") and then calls `.join` on that string, passing the list of items as parameter. However, unfortunately
+ this only accepts a list of strings and throws an error, if other types are passed (e.g. a list of numbers).
+
+This helper casts all items to `str` before joining.
+
+```python
+from pbu import list_join
+
+my_list = ["a", 0, 4.5, False]
+
+result = list_join(my_list, "-")
+# result is "a-0-4.5-False"
+
+result = "-".join(my_list)
+# throws Error because my_list contains items of type other than `str`
+```
+
 
 ### Datetime Functions
 

@@ -72,3 +72,14 @@ def list_map_filter(item_list: List[Any], filter_func: Callable, map_func: Calla
         return list(map(map_func, list(filter(filter_func, item_list))))
 
     return list(filter(filter_func, list(map(map_func, item_list))))
+
+
+def list_join(item_list: List[Any], join_token: str = ",") -> str:
+    """
+    Joins a list of items with the provided join token. The list can contain other types than strings, as they get cast
+    to string to avoid any errors.
+    :param item_list: a list of items
+    :param join_token: a token to join the items by
+    :return: a string of the joined list.
+    """
+    return join_token.join(list(map(lambda x: str(x), item_list)))
