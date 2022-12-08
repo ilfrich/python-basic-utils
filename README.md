@@ -296,10 +296,29 @@ from pbu import PagingInformation
 search_query = {"customer": "Max"}
 # store is an instance of a sub-class of AbstractMongoStore
 result = store.query(search_query, paging=PagingInformation(page=5, page_size=50))
-`
 ```
 
 The first `page` is page 0, the default `page_size` is 25.
+
+_Multiple Stores_
+
+If you have an app that wants to register multiple stores, you can use the MongoConnection utility. For this example, we
+ assume that we have declared a `UserStore(AbstractMongoStore)` and a `ProjectStore(AbstractMongoStore)`:
+
+```python
+from stores import UserStore, ProjectStore
+from pbu import MongoConnection
+
+connection = MongoConnection(mongo_url="mongodb://localhost:27017", mongo_db="myDbName")
+
+stores = {
+    "users": connection.create_store(store_class=UserStore, collection_name="users"),
+    "projects": connection.create_store(store_class=ProjectStore, collection_name="projects"),
+}
+```
+
+The individual store constructors still have to handle the `deserialised_class` and `data_model_version` parameters. 
+ This utility is simply a helper that avoids having to repeat the connection parameters (`mongo_url` and `mongo_db`).  
 
 ### BasicMonitor
 

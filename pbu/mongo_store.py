@@ -1,5 +1,5 @@
 import pymongo
-from typing import Optional, Union, List, Any
+from typing import Optional, Union, List, Any, Type
 from bson import ObjectId
 from abc import ABC, abstractmethod
 from pbu.logger import Logger
@@ -9,6 +9,7 @@ class AbstractMongoDocument(ABC):
     """
     Abstract parent class for classes representing the objects in a specific MongoDB collection.
     """
+
     def __init__(self, doc_id=None, data_model_version=None):
         """
         Parent constructor initialising the id and version attributes of this instance.
@@ -101,6 +102,7 @@ class PagingInformation:
     """
     Data structure to store paging information. The first page is page 0
     """
+
     def __init__(self, page=0, page_size=25):
         """
         Creates a new object with the provided parameters.
@@ -118,7 +120,8 @@ class AbstractMongoStore(ABC):
     documents, which can be represented by a MongoDocument sub-class.
     """
 
-    def __init__(self, mongo_url: str, db_name: str, collection_name: str, deserialised_class, data_model_version):
+    @abstractmethod
+    def __init__(self, mongo_url: str, db_name: str, collection_name: str, deserialised_class, data_model_version=1):
         """
         Creates a new instance of this store providing credentials and behaviour parameters.
         :param mongo_url: the url to the mongo database (including credentials)
@@ -370,3 +373,11 @@ class AbstractMongoStore(ABC):
 
         return set_update
 
+
+class MongoConnection:
+    def __init__(self, mongo_url, mongo_db):
+        self.mongo_url = mongo_url
+        self.mongo_db = mongo_db
+
+    def create_store(self, store_class: Type[AbstractMongoStore], collection_name: str) -> AbstractMongoStore:
+        return store_class(mongo_url=self.mongo_url, mongo_db=self.mongo_db, collection_name=collection_name)
