@@ -1,10 +1,5 @@
-# database related
-pymongo
-mysql-connector-python
-
 # time zone related
 pytz
-tzlocal
 
 # general libraries
 pandas

@@ -2,6 +2,22 @@ import time
 from datetime import datetime
 from abc import ABC, abstractmethod
 from pbu.logger import Logger
+from pbu.constant_listing import ConstantListing
+
+
+class JobStatus(ConstantListing):
+    CREATED = "CREATED"
+    QUEUED = "QUEUED"
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    FINISHED = "FINISHED"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    STALLED = "STALLED"
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+    PAUSED = "PAUSED"
+    RESUMED = "RESUMED"
 
 
 class BasicMonitor(ABC):

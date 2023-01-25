@@ -10,12 +10,11 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     1. [JSON](#json) - a JavaScript-like dictionary access helper
     2. [Logger](#logger) - a wrapper around the Python logging framework
     3. [TimeSeries](#timeseries) - powerful helper class to organise time series
-    4. [AbstractMongoStore](#abstractmongostore) - helper and wrapper class for MongoDB access
-    5. [AbstractMysqlStore](#abstractmysqlstore) - helper and wrapper class for MySQL access
-    6. [BasicMonitor](#basicmonitor) - monitor class orchestrating regular operations
-    7. [ConstantListing](#constantlisting) - a parent class allowing to fetch attribute values from a constant class
-    8. [PerformanceLogger](#performancelogger) - a utility class to log runtime performance of processes
-    9. [BasicConfig](#basicconfig) - application utility class managing access to environment variables
+    4. [BasicMonitor](#basicmonitor) - monitor class orchestrating regular operations
+    5. [ConstantListing](#constantlisting) - a parent class allowing to fetch attribute values from a constant class
+    6. [PerformanceLogger](#performancelogger) - a utility class to log runtime performance of processes
+    7. [BasicConfig](#basicconfig) - application utility class managing access to environment variables
+    8. [JsonDocument](#jsondocument) - a class that can serialise/deserialise a dictionary into a class instance
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
     2. [`default_options`](#default_options)
@@ -172,191 +171,6 @@ ts.set_resolution(timedelta(minutes=5))
 # no need to provide resolution now
 ts.align_to_resolution(start_date=datetime.now() - timedelta(days=1))
 ```
-
-### AbstractMongoStore
-
-Database store with helper functions for accessing MongoDB. Each store instance represents a single collection. This
-comes with an `AbstractMongoDocument` class, which can be used to model the document types you store within a MongoDB
-collection.
-
-**Example**
-
-```python
-from pbu import AbstractMongoStore, AbstractMongoDocument
-
-
-# this is the object type stored in the mongo store
-class MyObjectType(AbstractMongoDocument):
-    def __init__(self, val1, val2):
-        # optional: provide id and data model version 
-        super().__init__()
-        self.attribute = val1
-        self.attribute2 = val2,
-
-    def to_json(self):
-        # init with version and id
-        result = super().to_json()
-        # add attributes to dictionary and return
-        result["attribute"] = self.attribute
-        result["attribute2"] = self.attribute2
-        return result
-
-    @staticmethod
-    def from_json(json):
-        result = MyObjectType(json["attribute1"], json["attribute2"])
-        # get _id and version attributes
-        result.extract_system_fields(json)
-        return result
-
-
-class MyObjectStore(AbstractMongoStore):
-    def __init__(self, mongo_url, db_name, collection_name, data_model_version):
-        # provide object type class as de-serialisation class (providing from_json and to_json)
-        super.__init__(mongo_url, db_name, collection_name, MyObjectType, data_model_version)
-
-
-# create instance of store
-store = MyObjectStore("mongodb://localhost:27017", "mydb", "colName", 5)
-
-# create document using a dictionary
-store.create({
-    "version": 5,
-    "attribute1": "a",
-    "attribute2": 16,
-})
-
-# or use the type
-doc = MyObjectType("a", 16)
-doc.version = 5
-doc_id = store.create(doc)
-
-# update single document using helper functions
-store.update(AbstractMongoStore.id_query(doc_id),
-             AbstractMongoStore.set_update(["attribute1", "attribute2"], ["b", 12]))
-
-# returns a list of MyObjectType objects matching the version
-list_of_results = store.query({"version": 5})
-```
-
-**Attribute Mapping**
-
-As of version 0.7.0 a new feature provides an easier way to map between class attributes and JSON attributes. For
-primitive field mappings, we can use the built-in methods `to_json()` and `extract_system_fields(json)` to serialise and
-de-serialise the attributes / keys provided by the `get_attribute_mapping()` method. The `to_json()` method no longer
-has to be provided.
-
-This feature is backward-compatible. If the `get_attribute_mapping()` method is not available, the old mechanism using
-`to_json()` and `from_json()` still works as before.
-
-```python
-from pbu import AbstractMongoDocument
-
-
-class MyObjectType(AbstractMongoDocument):
-    def __init__(self):
-        super().__init__()
-        self.attribute_name_1 = None
-        self.attribute_2 = None
-
-    def get_attribute_mapping(self):
-        # provide a mapping from the class attribute to the JSON key
-        return {
-            "attribute_name_1": "attributeName1",
-            "attribute_2": "attribute2",
-        }
-
-    @staticmethod
-    def from_json(json):
-        obj = MyObjectType()
-        obj.extract_system_fields(json)
-        return obj
-```
-
-The `AbstractMongoDocument` class also provides a method `apply_updates(update, attributes: List[str] = [])`, which 
- allows to apply an update to the document with another object of the same class. If attribute names are listed that do
- not exist, a warning will be shown. If the provided `update` instance is of a different type than `self`, a 
- `ValueError` will be raised. This method is useful for update operations executed via an API call to your application.
-
-```python
-from pbu import AbstractMongoDocument
-class TypeA(AbstractMongoDocument):
-    def __init__(self):
-        super().__init__()
-        self.name: str = None
-        self.count: int = 0
-        self.is_valid: bool = False
-
-a1 = TypeA()
-a1.name = "Hello"
-a1.count = 5
-a1.is_valid = True
-
-a2 = TypeA()
-a2.name = "World"
-a2.count = 10
-a2.is_valid = False
-
-# only apply updates for `name` and `count`
-a1.apply_updates(a2, ["name", "count"])
-
-result = a1.name
-# result is "World"
-result = a1.count
-# result is 10
-result = a1.is_valid
-# result is True
-```
-
-**Sorting and Pagination**
-
-As of version 0.7.1 a new feature was added to the `query()` method to support sorting and pagination.
-
-The signature of `query(query)` was extended to `query(query, sorting=None, paging=None)`, so it is backward compatible.
-
-- The sorting can be provided as single string or as dictionary.
-- The paging can be provided as `PagingInformation` object.
-
-_Sorting_
-
-- `store.query(query, sorting="date")` will sort by the key "date" in ascending order
-- `store.query(query, sorting={"date": "desc"})` will sort by the key "date" in descending order
-- `store.query(query, sorting={"date": 1})` will sort by the key "date" in ascending order
-- `store.query(query, sorting={"date": 1, "time": "DESCENDING"})` will first sort by the key "date" in ascending order
-  and then by the key "time" in descending order
-- Any string starting with "asc" or "desc" (case-insensitive) is supported. You can also provide an integer, where 1 is
-  ascending and -1 is descending.
-
-_Paging_
-
-```python
-from pbu import PagingInformation
-
-search_query = {"customer": "Max"}
-# store is an instance of a sub-class of AbstractMongoStore
-result = store.query(search_query, paging=PagingInformation(page=5, page_size=50))
-```
-
-The first `page` is page 0, the default `page_size` is 25.
-
-_Multiple Stores_
-
-If you have an app that wants to register multiple stores, you can use the MongoConnection utility. For this example, we
- assume that we have declared a `UserStore(AbstractMongoStore)` and a `ProjectStore(AbstractMongoStore)`:
-
-```python
-from stores import UserStore, ProjectStore
-from pbu import MongoConnection
-
-connection = MongoConnection(mongo_url="mongodb://localhost:27017", mongo_db="myDbName")
-
-stores = {
-    "users": connection.create_store(store_class=UserStore, collection_name="users"),
-    "projects": connection.create_store(store_class=ProjectStore, collection_name="projects"),
-}
-```
-
-The individual store constructors still have to handle the `deserialised_class` and `data_model_version` parameters. 
- This utility is simply a helper that avoids having to repeat the connection parameters (`mongo_url` and `mongo_db`).  
 
 ### BasicMonitor
 
@@ -572,6 +386,27 @@ result = os.path.exists(cfg.get_data_directory())
   - The `required` parameter provides environment keys that have to be provided by the OS environment. If they are not
     available in the environment, an `EnvironmentError` will be raised.
 
+## `JsonDocument`
+
+**Methods**
+
+- `to_json()` - call this to return a dict representation of the instance. This will serialise the `id` and 
+  `data_model_version` attributes and any attributes provided in the `get_attribute_mapping()` method.
+- `get_attribute_mapping()` - provides a dict mapping between class attributes and JSON keys that will be used in the 
+  `dict` representation.
+- `extract_system_fields(json: dict)` - this will deserialise a `dict` and map the `_id` field to the `id` attribute, 
+   `dataModelVersion` field to `data_model_version` attribute and any field defined in the `get_attribute_mapping()`
+   method.
+- `apply_updates(update, attributes = [])` - overwrites attributes of the current instance with the `update`. The list 
+  of attributes has to be specified and is empty by default. The `update` must be of the same type as the current 
+  instance. If an `attribute` is listed that does not exist, a warning will be issued.
+
+**Static Methods** 
+
+- `.from_json(json)` - this method has to be implemented by any sub-class and is responsible for 
+  deserialising a JSON document into an instance of your sub-class. The instance method `extract_system_fields(json)`
+  can be used to map most simple attributes - i.e. any attributes provided in the `get_attribute_mapping()` method.
+
 ## Functions
 
 ### `list_to_json`
@@ -583,10 +418,9 @@ from pbu import list_to_json
 list_of_dictionaries = list_to_json(item_list=my_store.get_all())  # output is a list of dictionaries
 ```
 
-This function operates on lists of objects inheriting from `AbstractMongoDocument` or `AbstractMysqlDocument` and
-converts them into dictionaries using the `to_json()` method of any object passed into the function. Objects passed into
-the function _require_ the `to_json()` method and need to return the dictionary representation of the object. This
-function is just a mapping shortcut.
+This function operates on lists of objects inheriting from `JsonDocument` and converts them into dictionaries using the 
+`to_json()` method of any object passed into the function. Objects passed into the function _require_ the `to_json()` 
+method and need to return the dictionary representation of the object. This function is just a mapping shortcut.
 
 ### `default_options`
 
