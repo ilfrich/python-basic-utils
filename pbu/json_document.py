@@ -40,9 +40,9 @@ class JsonDocument(ABC):
     @abstractmethod
     def from_json(json: dict):
         """
-        Receives a dictionary or JSON object and returns an instance of this JsonDocument sub-class.
+        Receives a dictionary or JSON object and returns an instance of this JsonDocument subclass.
         :param json: a dictionary or JSON object instance
-        :return: an instance of a sub-class of JsonDocument
+        :return: an instance of a subclass of JsonDocument
         """
         pass
 
@@ -54,29 +54,29 @@ class JsonDocument(ABC):
 
     def _get_attribute_mapping(self) -> Optional[dict]:
         """
-        Internal method used to find out if the sub-class defines an attribute mapping. If the sub-class defines an
-        attribute mapping and returns a dictionary, the attribute mapping will be returned. Otherwise None will be
+        Internal method used to find out if the subclass defines an attribute mapping. If the subclass defines an
+        attribute mapping and returns a dictionary, the attribute mapping will be returned. Otherwise, None will be
         returned, which will be used by the to_json and extract_system_fields method to map all primitive fields from
         the de-serialised class to JSON and back.
         """
-        # find out if the sub-class defines the method
+        # find out if the subclass defines the method
         defining_class = self.get_attribute_mapping.__func__.__qualname__.split(".")[0]
         if defining_class == "JsonDocument":
             return None
 
-        # check if the sub-class method returns a dictionary
+        # check if the subclass method returns a dictionary
         attr_mapping = self.get_attribute_mapping()
         if not isinstance(attr_mapping, dict):
             return None
 
-        # mapping provided by sub-class, return it
+        # mapping provided by subclass, return it
         return attr_mapping
 
     def apply_updates(self, update, attributes: List[str] = []):
         """
         Applies an update (which has to be of the same type as self) to the current instance. The list of attributes
         past will be checked, if they are available.
-        :param update: an instancee of the same type as self
+        :param update: an instance of the same type as self
         :param attributes: a list of strings representing the attributes to update (see get_attribute_mapping)
         :raises ValueError: in case the provided `update` is an instance of a different class than self.
         """
@@ -90,6 +90,7 @@ class JsonDocument(ABC):
             else:
                 warnings.warn(f"Trying to update attribute '{attr}' but either the item or the update does not have it")
 
+
 def list_to_json(item_list: List[JsonDocument]):
     """
     Helper class serialising a list of JsonDocument into a list of dictionaries that can easily be serialised.
@@ -97,3 +98,15 @@ def list_to_json(item_list: List[JsonDocument]):
     :return: a list of dictionaries.
     """
     return list(map(lambda item: item.to_json(), item_list))
+
+
+def list_from_json(json_list: List[dict], deserialize_class: JsonDocument):
+    """
+    Helper class deserialising a list of dictionaries into a list of JsonDocument instances.
+    :param json_list: a list of dictionaries
+    :param deserialize_class: the class to use for deserialisation
+    :return: a list of JsonDocument instances
+    """
+    if not issubclass(deserialize_class, JsonDocument):
+        raise ValueError("Provided `deserialize_class` is not a subclass of JsonDocument")
+    return list(map(lambda json: deserialize_class.from_json(json), json_list))

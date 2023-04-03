@@ -17,14 +17,15 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     8. [JsonDocument](#jsondocument) - a class that can serialise/deserialise a dictionary into a class instance
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
-    2. [`default_options`](#default_options)
-    3. [`default_value`](#default_options)
-    4. [`list_find_one`](#list_find_one)
-    5. [`list_map_filter`](#list_map_filter)
-    6. [`list_join`](#list_join)
-    7. [Datetime Functions](#datetime-functions)
-    8. [`weighted_mean`](#weighted_mean)
-    9. [`normalise`](#normalise)
+    2. [`json_to_list`](#json_to_list)
+    3. [`default_options`](#default_options)
+    4. [`default_value`](#default_options)
+    5. [`list_find_one`](#list_find_one)
+    6. [`list_map_filter`](#list_map_filter)
+    7. [`list_join`](#list_join)
+    8. [Datetime Functions](#datetime-functions)
+    9. [`weighted_mean`](#weighted_mean)
+    10. [`normalise`](#normalise)
 
 ## Installation
 
@@ -221,11 +222,11 @@ class MyRegularOwnMonitor(BasicMonitor):
 **Optional constructor parameters**
 
 - You can also pass a custom logger as `custom_logger` argument to the constructor. By default it will use the
- `pbu.Logger` and log major events such as start/stop/restart and errors.
+  `pbu.Logger` and log major events such as start/stop/restart and errors.
 - Passing a `ping_interval` parameter allows you to check for overdue jobs more often than the wait time. For example
- you could have a `wait_time` of 1800s (30 min) and a `ping_interval` of 60s, which allows you to not miss out on an 
- execution if your machine running the monitor should sleep (e.g. on a laptop when you put it on standby, the sleep 
- timer stops). By default this is `60` seconds (or the `wait_time`, if the `wait_time` is lower than 60s)
+  you could have a `wait_time` of 1800s (30 min) and a `ping_interval` of 60s, which allows you to not miss out on an
+  execution if your machine running the monitor should sleep (e.g. on a laptop when you put it on standby, the sleep
+  timer stops). By default this is `60` seconds (or the `wait_time`, if the `wait_time` is lower than 60s)
 
 **Manage and run monitor**
 
@@ -257,7 +258,8 @@ Stopping a monitor doesn't interrupt the current thread. If the monitor is for e
 `stop` signal, the thread will still run until the wait period passes.
 
 > _In an API scenario, I recommend using a `dict` or `list` to cache monitors and retrieve them via the API using the
-`to_json()` method for identification. This then allows you to signal starting / stopping of monitors by providing the monitor ID and lookup the monitor instance in the monitor cache._
+`to_json()` method for identification. This then allows you to signal starting / stopping of monitors by providing the
+monitor ID and lookup the monitor instance in the monitor cache._
 
 **`BasicMonitor` Methods**
 
@@ -339,14 +341,15 @@ perf.finish(message="Total operation", logger=logger)
 ### `BasicConfig`
 
 This class can be used in applications to simplify access to environment variables. It is recommended to write your own
- sub-class of this class, where you can provide even more convenient access. However, the class can also be used 
- standalone.
+sub-class of this class, where you can provide even more convenient access. However, the class can also be used
+standalone.
 
 Basic usage:
 
 ```python
 import os
 from pbu import BasicConfig
+
 
 class Config(BasicConfig):
     def __init__(self):
@@ -355,13 +358,13 @@ class Config(BasicConfig):
             "IS_DEBUG": 1,
             "DATA_DIRECTORY": None,
         }, directory_keys=["DATA_DIRECTORY"], required=["DATA_DIRECTORY"])
-        
+
     def get_port(self) -> int:
         return int(self.get_config_value("port"))
-    
+
     def is_debug(self) -> bool:
         return int(self.get_config_value("is_debug")) == 1
-    
+
     def get_data_directory(self) -> str:
         return self.get_config_value("DATA_DIRECTORY")
 
@@ -375,35 +378,35 @@ result = os.path.exists(cfg.get_data_directory())
 **Methods**
 
 - `get_config_value(config_key, default_value=None)` - retrieves a config value, the default value override is optional
-  as it should already be provided in the `default_values` of the constructor. If a `config_key` hasn't been provided by 
+  as it should already be provided in the `default_values` of the constructor. If a `config_key` hasn't been provided by
   the `default_values` of the constructor, this will trigger reading the value fresh from the environment and storing it
-  within this class. 
+  within this class.
 - `__init__(default_values={}, directory_keys=[], required=[], env_file=".env")` - super constructor, which will be used
-  to load the initial environment. 
-  - The `default_values` provide the keys that will be extracted from the OS environment.
-  - The `directory_keys` are config keys that will be used to run a directory check. If the provided environment value
-    refers to a directory that doesn't exist yet, the class will attempt to create it.
-  - The `required` parameter provides environment keys that have to be provided by the OS environment. If they are not
-    available in the environment, an `EnvironmentError` will be raised.
+  to load the initial environment.
+    - The `default_values` provide the keys that will be extracted from the OS environment.
+    - The `directory_keys` are config keys that will be used to run a directory check. If the provided environment value
+      refers to a directory that doesn't exist yet, the class will attempt to create it.
+    - The `required` parameter provides environment keys that have to be provided by the OS environment. If they are not
+      available in the environment, an `EnvironmentError` will be raised.
 
 ## `JsonDocument`
 
 **Methods**
 
-- `to_json()` - call this to return a dict representation of the instance. This will serialise the `id` and 
+- `to_json()` - call this to return a dict representation of the instance. This will serialise the `id` and
   `data_model_version` attributes and any attributes provided in the `get_attribute_mapping()` method.
-- `get_attribute_mapping()` - provides a dict mapping between class attributes and JSON keys that will be used in the 
+- `get_attribute_mapping()` - provides a dict mapping between class attributes and JSON keys that will be used in the
   `dict` representation.
-- `extract_system_fields(json: dict)` - this will deserialise a `dict` and map the `_id` field to the `id` attribute, 
-   `dataModelVersion` field to `data_model_version` attribute and any field defined in the `get_attribute_mapping()`
-   method.
-- `apply_updates(update, attributes = [])` - overwrites attributes of the current instance with the `update`. The list 
-  of attributes has to be specified and is empty by default. The `update` must be of the same type as the current 
+- `extract_system_fields(json: dict)` - this will deserialise a `dict` and map the `_id` field to the `id` attribute,
+  `dataModelVersion` field to `data_model_version` attribute and any field defined in the `get_attribute_mapping()`
+  method.
+- `apply_updates(update, attributes = [])` - overwrites attributes of the current instance with the `update`. The list
+  of attributes has to be specified and is empty by default. The `update` must be of the same type as the current
   instance. If an `attribute` is listed that does not exist, a warning will be issued.
 
-**Static Methods** 
+**Static Methods**
 
-- `.from_json(json)` - this method has to be implemented by any sub-class and is responsible for 
+- `.from_json(json)` - this method has to be implemented by any sub-class and is responsible for
   deserialising a JSON document into an instance of your sub-class. The instance method `extract_system_fields(json)`
   can be used to map most simple attributes - i.e. any attributes provided in the `get_attribute_mapping()` method.
 
@@ -418,9 +421,18 @@ from pbu import list_to_json
 list_of_dictionaries = list_to_json(item_list=my_store.get_all())  # output is a list of dictionaries
 ```
 
-This function operates on lists of objects inheriting from `JsonDocument` and converts them into dictionaries using the 
-`to_json()` method of any object passed into the function. Objects passed into the function _require_ the `to_json()` 
+This function operates on lists of objects inheriting from `JsonDocument` and converts them into dictionaries using the
+`to_json()` method of any object passed into the function. Objects passed into the function _require_ the `to_json()`
 method and need to return the dictionary representation of the object. This function is just a mapping shortcut.
+
+### `list_from_json`
+
+```python
+from pbu import list_from_json
+
+# assuming we have a class `MyClass` that inherits from `JsonDocument` and implements the `from_json()` method
+list_from_json(item_list=[{"a": 1, "b": 2}, {"a": 3, "b": 4}], class_type=MyClass)
+```
 
 ### `default_options`
 
@@ -469,25 +481,25 @@ result = default_value(0, 5)  # value will be used, as it doesn't match None
 ### `list_find_one`
 
 Finds the first item in a list that matches the filter function - this is a shortcut for running `filter(..)` on a list,
- then checking its length and if the length is > 0 fetching the first item.
+then checking its length and if the length is > 0 fetching the first item.
 
 ```python
 from pbu import list_find_one
 
 my_list = ["a", "b", "c"]
 
-result = list_find_one(lambda x: x == "c", my_list)  
+result = list_find_one(lambda x: x == "c", my_list)
 # result is "c"
 
-result = list_find_one(lambda x: x == "d", my_list)  
+result = list_find_one(lambda x: x == "d", my_list)
 # result is None
 ```
 
 ### `list_map_filter`
 
 A shorthand for filtering and mapping a lsit of items. The function allows to pass both lambdas (`filter` and `map`)
- into one function call. A boolean flag (`filter_first=True`) decides whether the filter or map operation is called 
- first. 
+into one function call. A boolean flag (`filter_first=True`) decides whether the filter or map operation is called
+first.
 
 ```python
 from pbu import list_map_filter
@@ -508,8 +520,8 @@ result = list_map_filter(my_list, filter_func=lambda x: x > 50, map_func=lambda 
 ### `list_join`
 
 A helper function that joins a list with a given token. The Python default way for joining a list of items uses the join
- token (e.g. ",") and then calls `.join` on that string, passing the list of items as parameter. However, unfortunately
- this only accepts a list of strings and throws an error, if other types are passed (e.g. a list of numbers).
+token (e.g. ",") and then calls `.join` on that string, passing the list of items as parameter. However, unfortunately
+this only accepts a list of strings and throws an error, if other types are passed (e.g. a list of numbers).
 
 This helper casts all items to `str` before joining.
 
@@ -524,7 +536,6 @@ result = list_join(my_list, "-")
 result = "-".join(my_list)
 # throws Error because my_list contains items of type other than `str`
 ```
-
 
 ### Datetime Functions
 
@@ -598,7 +609,7 @@ It is possible to provide a smaller upper bound than lower bound, which will inv
 value. As an example, if we normalise 4 between 0 and 10, we get 0.4. If we invert the boundaries to normalise 4 between
 10 and 0, we get 0.6 (`1.0 - 0.4`).
 
-Any invalid input (`None`) will result in 0.0 being returned. 
+Any invalid input (`None`) will result in 0.0 being returned.
 
 ```python
 from pbu import normalise
@@ -616,4 +627,26 @@ norm5 = normalise(value=-5, min_val=100, max_val=0.5)  # 1.0
 # invalid inputs will return 0.0
 norm6 = normalise(value=None, min_val=0, max_val=10)  # 0.0
 norm7 = normalise(value=5, min_val=0, max_val=None)  # 0.0
+```
+
+Since version 1.0.1 a new parameter can be passed to the function that normalises the value, but can exceed the
+boundaries provided by `min_val` and `max_val`.
+
+```python
+from pbu import normalise
+
+norm1 = normalise(value=12, min_val=0, max_val=10, limit=False)  # 1.2
+```
+
+### `discretise`
+
+Discretises a numeric value into a number of buckets determined by the provided precision and boolean flag indicating
+whether to use the lower, upper or middle value of the bucket as the value for the bucket.
+
+```python
+from pbu import discretise
+
+disc1 = discretise(value=4.5, precision=1.0, floor=True)  # 4.0
+disc2 = discretise(value=4.5, precision=0.4, ceil=True)  # 4.8
+disc3 = discretise(value=4.5, precision=0.4)  # 4.6 (assumes mid-point if neither floor nor ceil is set)
 ```
