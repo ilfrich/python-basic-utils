@@ -34,7 +34,8 @@ def weighted_mean(values: List[Union[float, int]], weights: List[Union[int, floa
     return total_value / total_weight
 
 
-def normalise(value: Union[float, int], min_val: Union[float, int], max_val: Union[float, int], limit=True) -> float:
+def normalise(value: Union[float, int], min_val: Union[float, int], max_val: Union[float, int], limit=True,
+              mid_point: Optional[Union[float, int]] = None) -> float:
     """
     Normalises the given input `value` between min_val and max_val as number between 0 and 1. If the min_val is provided
     larger than the max_val, the function will automatically invert them and provide the `1 - normalised_value`.
@@ -43,6 +44,8 @@ def normalise(value: Union[float, int], min_val: Union[float, int], max_val: Uni
     :param max_val: the upper boundary representing 1.0
     :param limit: a boolean flag indicating whether a value between 0 and 1 is returned. Otherwise, values greater than
     1 and lower than 0 can be returned.
+    :param mid_point: an optional mid-point to use for the normalisation. If provided, the normalisation will be
+    performed between the min_val and the mid_point, and the mid_point and the max_val.
     :return: the normalised value expressed as where the value sits between min_val and max_val
     """
     if value is None or min_val is None or max_val is None:
@@ -64,7 +67,15 @@ def normalise(value: Union[float, int], min_val: Union[float, int], max_val: Uni
 
     if max_value == min_value:
         return 0.5
-    norm = (float(value) - float(min_value)) / (float(max_value) - float(min_value))
+
+    norm = 0.5  # just in case
+    if mid_point is None:
+        norm = (float(value) - float(min_value)) / (float(max_value) - float(min_value))
+    else:
+        if value <= mid_point:
+            norm = ((float(value) - float(min_value)) / (float(mid_point) - float(min_value))) * 0.5
+        else:
+            norm = (((float(value) - float(mid_point)) / (float(max_value) - float(mid_point))) * 0.5) + 0.5
     return norm if inverted is False else 1.0 - norm
 
 
