@@ -68,10 +68,23 @@ def list_map_filter(item_list: List[Any], filter_func: Callable, map_func: Calla
     (False)
     :return: the result of the filter + map operation cast to a list
     """
+    if item_list is None:
+        return None
     if filter_first:
-        return list(map(map_func, list(filter(filter_func, item_list))))
+        interm_result = item_list
+        if filter_func is not None:
+            interm_result = list(filter(filter_func, interm_result))
+        if map_func is not None:
+            interm_result = list(map(map_func, interm_result))
+        return interm_result
 
-    return list(filter(filter_func, list(map(map_func, item_list))))
+    interm_result = item_list
+    if map_func is not None:
+        interm_result = list(map(map_func, interm_result))
+    if filter_func is not None:
+        interm_result = list(filter(filter_func, interm_result))
+
+    return interm_result
 
 
 def list_join(item_list: List[Any], join_token: str = ",") -> str:
@@ -83,3 +96,14 @@ def list_join(item_list: List[Any], join_token: str = ",") -> str:
     :return: a string of the joined list.
     """
     return join_token.join(list(map(lambda x: str(x), item_list)))
+
+
+def not_none(item_list: List[Any]) -> List[Any]:
+    """
+    Filters a list of items for items that are not None.
+    :param item_list: a list of items
+    :return: a list of items that are not None
+    """
+    if isinstance(item_list, list):
+        return list(filter(lambda x: x is not None, item_list))
+    raise ValueError(f"You can only pass a list to not_none, not {type(item_list)}")

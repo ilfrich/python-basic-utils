@@ -23,9 +23,10 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     5. [`list_find_one`](#list_find_one)
     6. [`list_map_filter`](#list_map_filter)
     7. [`list_join`](#list_join)
-    8. [Datetime Functions](#datetime-functions)
-    9. [`weighted_mean`](#weighted_mean)
-    10. [`normalise`](#normalise)
+    8. [`not_none`](#not_none)
+    9. [Datetime Functions](#datetime-functions)
+    10. [`weighted_mean`](#weighted_mean)
+    11. [`normalise`](#normalise)
 
 ## Installation
 
@@ -536,6 +537,18 @@ result = list_join(my_list, "-")
 result = "-".join(my_list)
 # throws Error because my_list contains items of type other than `str`
 ```
+
+### `not_none`
+
+A helper function to filter out `None` values from a list.
+
+```python
+from pbu import not_none
+
+my_list = ["a", None, "b", None, "c"]
+result = not_none(my_list)
+# result is ["a", "b", "c"]
+``` 
 
 ### Datetime Functions
 

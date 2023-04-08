@@ -24,7 +24,7 @@ def weighted_mean(values: List[Union[float, int]], weights: List[Union[int, floa
     num_weights = len(weights)
 
     for idx, val in enumerate(values):
-        current_weight = 1.0 if num_weights < idx + 1 else weights[idx]
+        current_weight = weights[-1] if num_weights < idx + 1 else weights[idx]
         total_weight += current_weight
         total_value += val * current_weight
 
