@@ -84,7 +84,7 @@ def discretise(value: Union[float, int], precision: Union[float, int] = 1, floor
     """
     This function will round the given value to the nearest multiple of the given precision. There are 2 boolean flags
     available that can force the function to return the lower or upper boundary of a precision interval. If neither is
-    set, the function will return the mid point of the interval.
+    set, the function will return the mid-point of the interval.
     :param value: the value to discretise
     :param precision: the precision to use for the discretisation
     :param floor: a boolean flag indicating whether the lower boundary of the precision interval should be returned

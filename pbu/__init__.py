@@ -11,3 +11,4 @@ from pbu.datascience_util import weighted_mean, normalise, discretise
 from pbu.app_config import BasicConfig
 from pbu.json_document import JsonDocument, list_to_json, list_from_json
 from pbu.files import write_json, read_json
+from pbu.debug_object import DebugObject

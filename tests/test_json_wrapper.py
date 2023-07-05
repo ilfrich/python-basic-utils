@@ -1,4 +1,4 @@
-from pbu import JSON
+from pbu.json_wrapper import JSON
 
 
 def test_dict_compatibility():

@@ -1,8 +1,10 @@
 import time
 from datetime import datetime
+from typing import Optional
 from abc import ABC, abstractmethod
 from pbu.logger import Logger
 from pbu.constant_listing import ConstantListing
+from pbu.debug_object import DebugObject
 
 
 class JobStatus(ConstantListing):
@@ -20,16 +22,19 @@ class JobStatus(ConstantListing):
     RESUMED = "RESUMED"
 
 
-class BasicMonitor(ABC):
+class BasicMonitor(ABC, DebugObject):
     """
     Abstract base class (ABC) for all monitors containing base functionality for lifecycle and meta information.
     """
 
-    def __init__(self, monitor_id, wait_time, run_interval=False, custom_logger=None, ping_interval=60):
+    def __init__(self, monitor_id: str, wait_time: int, run_interval: bool = False,
+                 custom_logger: Optional[Logger] = None, ping_interval: int = 60, debug: bool = False,
+                 debug_logger: Optional[Logger] = None):
         """
         Super constructor invoked from implementing sub-classes of this class
         providing interfaces start, track_success and track_error
         """
+        super().__init__(debug, debug_logger)
         # set meta flags
         self.active = False
         self.finished = False
