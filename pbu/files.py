@@ -29,3 +29,12 @@ def read_json(path: str) -> Optional[Union[dict, list]]:
     data = json.load(fp)
     fp.close()
     return data
+
+
+def ensure_directory(path: str):
+    """
+    Makes sure a certain directory exists. If it doesn't exist, the directory will be created.
+    :param path: a path reference (absolute or relative) to the directory that should exist.
+    """
+    if not os.path.isdir(path):
+        os.makedirs(path)

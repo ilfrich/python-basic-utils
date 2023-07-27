@@ -1,4 +1,4 @@
-from typing import List, Union, Optional
+from typing import List, Union, Optional, Tuple
 from statistics import mean
 
 
@@ -68,15 +68,19 @@ def normalise(value: Union[float, int], min_val: Union[float, int], max_val: Uni
     if max_value == min_value:
         return 0.5
 
-    norm = 0.5  # just in case
+    def _handle_return(norm):
+        return norm if inverted is False else 1.0 - norm  # handle inverted flag
+
     if mid_point is None:
-        norm = (float(value) - float(min_value)) / (float(max_value) - float(min_value))
+        return _handle_return((float(value) - float(min_value)) / (float(max_value) - float(min_value)))
     else:
         if value <= mid_point:
-            norm = ((float(value) - float(min_value)) / (float(mid_point) - float(min_value))) * 0.5
+            # value is below mid-point (return 0 - 0.5)
+            return _handle_return(((float(value) - float(min_value)) / (float(mid_point) - float(min_value))) * 0.5)
         else:
-            norm = (((float(value) - float(mid_point)) / (float(max_value) - float(mid_point))) * 0.5) + 0.5
-    return norm if inverted is False else 1.0 - norm
+            # value is above mid-point (return 0.5 - 1.0)
+            return _handle_return(
+                (((float(value) - float(mid_point)) / (float(max_value) - float(mid_point))) * 0.5) + 0.5)
 
 
 def discretise(value: Union[float, int], precision: Union[float, int] = 1, floor=False,
@@ -100,3 +104,37 @@ def discretise(value: Union[float, int], precision: Union[float, int] = 1, floor
         return value - remainder
     # mid point is default fallback
     return (value - remainder) + (precision * 0.5)
+
+
+def compute_linear_function_parameters(xy_points: List[tuple]) -> Tuple[float, float, float]:
+    """
+    Computes m and b to minimise the error of all given points to map onto a linear function y = m * x + b.
+    :param xy_points: a list of tuples representing the (x, y) points
+    :return: a tuple with 3 elements containing the parameters m, b and the total (sum) error of all points when
+    comparing against the linear function.
+    """
+    n = len(xy_points)
+
+    # arrays to store all the elements
+    x2 = []  # x squared
+    xy = []  # x * y
+    x = []  # all x-values
+    y = []  # all y-values
+
+    # collect all point data
+    for (x_val, y_val) in xy_points:
+        x2.append(x_val * x_val)
+        xy.append(x_val * y_val)
+        x.append(x_val)
+        y.append(y_val)
+
+    # determine m and b
+    m = ((n * sum(xy)) - (sum(x) * sum(y))) / ((n * sum(x2)) - (sum(x) * sum(x)))
+    b = (sum(y) - (m * sum(x))) / n
+
+    # calculate total error
+    error = 0.0
+    for (x, y) in xy_points:
+        error += abs(y - ((m * x) + b))
+
+    return m, b, error
