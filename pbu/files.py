@@ -1,6 +1,7 @@
 import os
 import json
 from typing import Optional, Union
+from pbu.default_options import default_options
 
 
 def write_json(data: Union[dict, list], path: str):
@@ -38,3 +39,29 @@ def ensure_directory(path: str):
     """
     if not os.path.isdir(path):
         os.makedirs(path)
+
+
+def convert_to_path(identifier: Optional[str], custom_replacements={}) -> Optional[str]:
+    if identifier is None:
+        return None
+
+    default_replacements = {
+        "-": [" ", "(", ")", "|", "[", "]", ".", ",", "/", "\\"],  # replace these values with hyphen
+        "": ["`", '"', "'"]  # replace these values with empty string
+    }
+
+    replacement_map = {}
+    for replacement, searches in default_replacements.items():
+        for search in searches:
+            replacement_map[search] = replacement
+
+    if custom_replacements is not None:
+        replacement_map = default_options(replacement_map, custom_replacements)
+
+    for search, replace in replacement_map:
+        identifier = identifier.replace(search, replace)
+
+    return identifier
+
+
+
