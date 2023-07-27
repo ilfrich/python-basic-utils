@@ -58,7 +58,7 @@ def convert_to_path(identifier: Optional[str], custom_replacements={}) -> Option
     if custom_replacements is not None:
         replacement_map = default_options(replacement_map, custom_replacements)
 
-    for search, replace in replacement_map:
+    for search, replace in replacement_map.items():
         identifier = identifier.replace(search, replace)
 
     return identifier
