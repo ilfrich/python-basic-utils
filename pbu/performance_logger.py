@@ -32,3 +32,9 @@ class PerformanceLogger:
             logger.info(print_string)
         else:
             print(print_string)
+
+    def get_total_runtime(self) -> timedelta:
+        return datetime.now() - self.start_time
+
+    def get_runtime(self) -> timedelta:
+        return datetime.now() - self.last_checkpoint if self.last_checkpoint is not None else self.start_time

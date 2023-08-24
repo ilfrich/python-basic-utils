@@ -39,6 +39,7 @@ def ensure_directory(path: str):
     """
     if not os.path.isdir(path):
         os.makedirs(path)
+    return path
 
 
 def convert_to_path(identifier: Optional[str], custom_replacements={}) -> Optional[str]:
