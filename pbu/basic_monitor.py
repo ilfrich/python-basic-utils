@@ -20,6 +20,7 @@ class JobStatus(ConstantListing):
     ERROR = "ERROR"
     PAUSED = "PAUSED"
     RESUMED = "RESUMED"
+    RERUN = "RERUN"
 
 
 class BasicMonitor(ABC, DebugObject):

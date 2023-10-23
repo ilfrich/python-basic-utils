@@ -63,6 +63,3 @@ def convert_to_path(identifier: Optional[str], custom_replacements={}) -> Option
         identifier = identifier.replace(search, replace)
 
     return identifier
-
-
-
