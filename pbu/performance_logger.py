@@ -69,7 +69,7 @@ class PerformanceTracker:
         if key not in self.start_times:
             raise ValueError(f"Unknown key: '{key}'")
 
-        duration = self.start_times[key] - time()
+        duration = time() - self.start_times[key]
         self.performance_stats.append(duration)
         if len(self.performance_stats) % self.print_interval == 0:
             self.print_stats()

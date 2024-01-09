@@ -361,7 +361,7 @@ for i in range(0, 100):
 
 Every 20 executions, this will print out a line line this:
 
-```Performance for operation 'compute' (20): Avg: -5.960464477539062e-07s | Min: -1.1920928955078125e-06 | Max: -2.384185791015625e-07```
+```Performance for operation 'compute' (20): Avg: 5.960464477539062e-07s | Min: 2.384185791015625e-07 | Max: 1.1920928955078125e-06```
 
 with the operation name, followed by the number of executions and then avg, min and max performance in seconds.
 
