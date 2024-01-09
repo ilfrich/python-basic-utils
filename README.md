@@ -13,8 +13,9 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     4. [BasicMonitor](#basicmonitor) - monitor class orchestrating regular operations
     5. [ConstantListing](#constantlisting) - a parent class allowing to fetch attribute values from a constant class
     6. [PerformanceLogger](#performancelogger) - a utility class to log runtime performance of processes
-    7. [BasicConfig](#basicconfig) - application utility class managing access to environment variables
-    8. [JsonDocument](#jsondocument) - a class that can serialise/deserialise a dictionary into a class instance
+    7. [PerformanceTracker](#performancetracker) - a utility class to track performance of a repeated process 
+    8. [BasicConfig](#basicconfig) - application utility class managing access to environment variables
+    9. [JsonDocument](#jsondocument) - a class that can serialise/deserialise a dictionary into a class instance
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
     2. [`json_to_list`](#json_to_list)
@@ -338,6 +339,31 @@ perf.finish(message="Total operation", logger=logger)
 - `checkpoint(message=None, logger=None)` - creates a new checkpoint and optionally logs a message
 - `finish(message=None, logger=None)` - prints out the total runtime since `start()` was called or the class was
   initialised
+
+### `PerformanceTracker`
+
+A utility class that allows to track the runtime of a repeated process and print out performance stats every `n` 
+repetitions.
+
+Basic usage:
+
+```python
+from pbu import PerformanceTracker
+
+tracker = PerformanceTracker(operation_name="compute", print_interval=20)
+for i in range(0, 100):
+    # starting the operation is thread-safe and can be executed in parallel, unique keys are getting returned 
+    track_key = tracker.start_operation()
+    # perform your operation
+    a = i * i * i
+    tracker.end_operation(track_key)
+```
+
+Every 20 executions, this will print out a line line this:
+
+```Performance for operation 'compute' (20): Avg: -5.960464477539062e-07s | Min: -1.1920928955078125e-06 | Max: -2.384185791015625e-07```
+
+with the operation name, followed by the number of executions and then avg, min and max performance in seconds.
 
 ### `BasicConfig`
 

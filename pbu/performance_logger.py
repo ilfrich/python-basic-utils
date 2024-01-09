@@ -1,3 +1,6 @@
+import uuid
+from statistics import mean
+from time import time
 from datetime import datetime, timedelta
 from logging import Logger
 
@@ -38,3 +41,48 @@ class PerformanceLogger:
 
     def get_runtime(self) -> timedelta:
         return datetime.now() - self.last_checkpoint if self.last_checkpoint is not None else self.start_time
+
+
+class PerformanceTracker:
+    def __init__(self, operation_name: str, print_interval=60, logger=None):
+        self.operation_name = operation_name
+        self.print_interval = print_interval
+        self.logger = logger
+        self.performance_stats = []
+        self.start_times = {}
+
+    def _generate_unique_key(self):
+        key = str(uuid.uuid4())
+        if key in self.start_times:
+            return self._generate_unique_key()
+        return key
+
+    def start_operation(self) -> str:
+        key = self._generate_unique_key()
+        start_time = time()
+        self.start_times[key] = start_time
+        return key
+
+    def end_operation(self, key: str = None):
+        if key is None:
+            raise ValueError("'key' parameter cannot be none")
+        if key not in self.start_times:
+            raise ValueError(f"Unknown key: '{key}'")
+
+        duration = self.start_times[key] - time()
+        self.performance_stats.append(duration)
+        if len(self.performance_stats) % self.print_interval == 0:
+            self.print_stats()
+
+    def print_stats(self):
+        if len(self.performance_stats) == 0:
+            return
+
+        message = f"Performance for operation '{self.operation_name}' ({len(self.performance_stats)}): " \
+                  f"Avg: {mean(self.performance_stats)} | " \
+                  f"Min: {min(self.performance_stats)} | " \
+                  f"Max: {max(self.performance_stats)}"
+        if self.logger is not None:
+            self.logger.info(message)
+        else:
+            print(message)
