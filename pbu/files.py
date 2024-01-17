@@ -63,3 +63,20 @@ def convert_to_path(identifier: Optional[str], custom_replacements={}) -> Option
         identifier = identifier.replace(search, replace)
 
     return identifier
+
+
+def check_filesystem_name(file_or_folder_name, allow_dot=False) -> bool:
+    # check for relative path specs
+    if ".." in file_or_folder_name:
+        return False
+
+    # check for invalid characters
+    invalid_chars = [" ", "/", "\\", "'", '"', "+", "{", "}", "~", ";", ":", "<", ">", "(", ")", "[", "]", "*", "$",
+                     "@", "%", "^", "&", "!", "`", "?", ",", "=", "#", "|"]
+    if allow_dot is False:
+        invalid_chars.append(".")
+    for ch in invalid_chars:
+        if ch in file_or_folder_name:
+            raise False
+
+    return True
