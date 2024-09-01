@@ -3,6 +3,7 @@ import requests
 import logging
 import sys
 import traceback
+import inspect
 from logging import handlers
 
 CONFIG_KEY_LOG_SERVER = "PBU_LOG_SERVER"
@@ -24,6 +25,19 @@ class _CustomHttpHandler(logging.Handler):
         Contributed by Franz Glasner.
         """
         result = record.__dict__
+
+        
+        # find line number outside of logging functions (this might cause a hit on performance!)
+        call_stack = inspect.stack()
+        for i in range(0, 10):  # max 10 should reach outside logging
+            if len(call_stack) < i:
+                continue
+            cs_file = call_stack[i].filename
+            if cs_file.endswith("logging/__init__.py") or cs_file.endswith("/pbu/logger.py"):
+                continue
+            result["lineno"] = call_stack[i].lineno
+            break
+
         if "exc_info" in result and result["exc_info"] is not None:
             trace = []
             for el in result["exc_info"]:
@@ -111,25 +125,46 @@ class Logger(logging.Logger):
         self._logger = logger
 
     def warn(self, msg, *args, **kwargs):
-        self._logger.warning(msg, *args, **kwargs)
+        try:
+            self._logger.warning(msg, *args, **kwargs)
+        except BaseException as be:
+            print(msg)
 
     def warning(self, msg, *args, **kwargs):
-        self._logger.warning(msg, *args, **kwargs)
+        try:
+            self._logger.warning(msg, *args, **kwargs)
+        except BaseException as be:
+            print(msg)
 
     def error(self, msg, *args, **kwargs):
-        self._logger.error(msg, stack_info=True, exc_info=True, *args, **kwargs)
+        try:
+            self._logger.error(msg, stack_info=True, exc_info=True, *args, **kwargs)
+        except BaseException as be:
+            print(msg)
 
     def debug(self, msg, *args, **kwargs):
-        self._logger.debug(msg, *args, **kwargs)
+        try:
+            self._logger.debug(msg, *args, **kwargs)
+        except BaseException as be:
+            print(msg)
 
     def info(self, msg, *args, **kwargs):
-        self._logger.info(msg, *args, **kwargs)
+        try:
+            self._logger.info(msg, *args, **kwargs)
+        except BaseException as be:
+            print(msg)
 
     def exception(self, msg):
-        self._logger.exception(msg, stack_info=True)
+        try:
+            self._logger.exception(msg, stack_info=True)
+        except BaseException as be:
+            print(msg)
 
     def handle(self, record):
-        self._logger.handle(record)
+        try:
+            self._logger.handle(record)
+        except BaseException as be:
+            print(record)
 
     def get_handler(self):
         if len(self._logger.handlers) == 0:
