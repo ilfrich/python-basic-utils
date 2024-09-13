@@ -1,4 +1,5 @@
 import time
+from threading import Event
 from datetime import datetime
 from typing import Optional
 from abc import ABC, abstractmethod
@@ -56,8 +57,11 @@ class BasicMonitor(ABC, DebugObject):
         if wait_time < ping_interval:
             self.logger.info(f"WARNING, monitor wait time {ping_interval} is longer than {wait_time} - overriding")
             self.ping_interval = wait_time
+        
         # runtime variables
-        self.next_execution = 0
+        self._next_execution = 0
+        self._wait_event: Event = Event()
+        self.is_interrupted: bool = False
 
     @abstractmethod
     def running(self):
@@ -89,26 +93,33 @@ class BasicMonitor(ABC, DebugObject):
         takes into account the execution time of the last loop, if run_interval is True.
         :param exec_duration: the execution time of the last execution loop (only relevant for run_interval=True)
         """
+        # reset interrupted flag
+        if self._wait_event.is_set():
+            self._wait_event = Event()
+            self.is_interrupted = False
+
         now = time.time()
         # set next execution
         if self.run_interval:
             gap_next = max(1, self.wait_time - exec_duration)
             if gap_next < self.ping_interval:
                 # special handling if next execution is sooner than ping interval
-                time.sleep(gap_next)
+                self._wait_event.wait(gap_next)
                 return  # exit after wait
-            self.next_execution = now + gap_next
+            self._next_execution = now + gap_next
         else:
-            self.next_execution = now + self.wait_time
+            self._next_execution = now + self.wait_time
 
         # check every ping interval if we're close to next execution
-        while time.time() + self.ping_interval < self.next_execution:
-            time.sleep(self.ping_interval)
+        while time.time() + self.ping_interval < self._next_execution:
+            self._wait_event.wait(self.ping_interval)
+            if self._wait_event.is_set():
+                return
 
         # wait remaining time
-        remaining = round(self.next_execution - time.time())
+        remaining = round(self._next_execution - time.time())
         if remaining > 0:
-            time.sleep(remaining)
+            self._wait_event.wait(remaining)
         if remaining < 0:
             self.logger.info(f"Overdue execution by {-round(remaining)}s")
 
@@ -126,6 +137,11 @@ class BasicMonitor(ABC, DebugObject):
         # wait till midnight
         self.logger.info("Waiting {} seconds for monitor {} until midnight".format(wait_time, self.monitor_id))
         time.sleep(wait_time)
+
+    def interrupt(self):
+        if self._wait_event is not None and not self._wait_event.is_set():
+            self._wait_event.set()
+            self.is_interrupted = True
 
     def start(self):
         """

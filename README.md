@@ -219,6 +219,9 @@ class MyRegularOwnMonitor(BasicMonitor):
             # result = do_something(self.data)
             # store_result(result)
             self.wait(exec_duration=round(time() - start_ts))  # include the execution duration
+            if self.is_interrupted:
+                # wait time got interrupted from the outside (see below), flag will be reset on next call to wait()
+                pass
 ```
 
 **Optional constructor parameters**
@@ -251,6 +254,9 @@ regular_monitor = MyRegularOwnMonitor(data={"some": "data"})
 # create thread with start-up function and start it
 t = threading.Thread(target=start_monitor_thread, args=(regular_monitor,), daemon=True)
 t.start()
+
+# if you want to interrupt the wait time at any point (temporarily sets the .is_interrupted attribute to True)
+regular_monitor.interrupt()
 
 # in a separate piece of code (e.g. REST handler or timer) you can stop the monitor instance
 regular_monitor.stop()
