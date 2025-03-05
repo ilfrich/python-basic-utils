@@ -6,9 +6,16 @@ import traceback
 import inspect
 from logging import handlers
 
+# store log files in this folder, if configured
+CONFIG_KEY_LOG_FOLDER = "PBU_LOG_FOLDER"
+
+# send log records to this server, if configured
 CONFIG_KEY_LOG_SERVER = "PBU_LOG_SERVER"
 CONFIG_KEY_LOG_SERVER_AUTH = "PBU_LOG_SERVER_AUTH"
-CONFIG_KEY_LOG_FOLDER = "PBU_LOG_FOLDER"
+
+# only send errors to this API
+CONFIG_KEY_ERROR_SERVER = "PBU_ERROR_SERVER"
+CONFIG_KEY_ERROR_SERVER_AUTH = "PBU_ERROR_SERVER_AUTH"
 
 
 class _CustomHttpHandler(logging.Handler):
@@ -26,7 +33,6 @@ class _CustomHttpHandler(logging.Handler):
         """
         result = record.__dict__
 
-        
         # find line number outside of logging functions (this might cause a hit on performance!)
         call_stack = inspect.stack()
         for i in range(0, 10):  # max 10 should reach outside logging
@@ -70,8 +76,10 @@ class _CustomHttpHandler(logging.Handler):
         try:
             requests.post(url=self.url, json=_CustomHttpHandler._map_log_record(record), headers=headers)
         except BaseException as be:
-            print("Error sending log message: {} ({})".format(_CustomHttpHandler._map_log_record(record), be),
-                  file=sys.stderr)
+            print(
+                "Error sending log message: {} ({})".format(_CustomHttpHandler._map_log_record(record), be),
+                file=sys.stderr,
+            )
 
 
 class Logger(logging.Logger):
@@ -83,8 +91,14 @@ class Logger(logging.Logger):
     >>> logger.info("My message")
     """
 
-    def __init__(self, name, log_folder=None, enable_logger_name=True, enabled_log_levels=[logging.INFO, logging.ERROR],
-                 message_format="%(asctime)s %(levelname)s:%(name)s %(message)s"):
+    def __init__(
+        self,
+        name,
+        log_folder=None,
+        enable_logger_name=True,
+        enabled_log_levels=[logging.INFO, logging.ERROR],
+        message_format="%(asctime)s %(levelname)s:%(name)s %(message)s",
+    ):
         """
         Creates a new instance of this logger and will store it as a private field, which is exposed via the get()
         method.
@@ -98,6 +112,10 @@ class Logger(logging.Logger):
         self.log_server = os.getenv(CONFIG_KEY_LOG_SERVER)
         self.log_server_auth = os.getenv(CONFIG_KEY_LOG_SERVER_AUTH)
 
+        # decide if this logger sends messages to an error server
+        self.error_server = os.getenv(CONFIG_KEY_ERROR_SERVER)
+        self.error_server_auth = os.getenv(CONFIG_KEY_ERROR_SERVER_AUTH)
+
         self.is_worker = self.log_server is not None
 
         if log_folder is not None:
@@ -108,19 +126,35 @@ class Logger(logging.Logger):
         if not logger.handlers:
             if self.is_worker:
                 # worker process
-                self._configure_worker(logger, self.log_server, message_format, self.log_server_auth,
-                                       enabled_log_levels)
+                self._configure_worker(
+                    logger, self.log_server, message_format, self.log_server_auth, enabled_log_levels
+                )
             else:
                 # listener process
                 if os.getenv(CONFIG_KEY_LOG_FOLDER) is not None and log_folder is None:
                     log_folder = os.getenv(CONFIG_KEY_LOG_FOLDER)
                 if log_folder is None:
-                    self._configure_listener(logger, message_format, enable_logger_name=enable_logger_name,
-                                             enabled_log_levels=enabled_log_levels)
+                    self._configure_listener(
+                        logger,
+                        message_format,
+                        enable_logger_name=enable_logger_name,
+                        enabled_log_levels=enabled_log_levels,
+                    )
                 else:
-                    self._configure_listener(logger, message_format, log_folder=log_folder,
-                                             enable_logger_name=enable_logger_name,
-                                             enabled_log_levels=enabled_log_levels)
+                    self._configure_listener(
+                        logger,
+                        message_format,
+                        log_folder=log_folder,
+                        enable_logger_name=enable_logger_name,
+                        enabled_log_levels=enabled_log_levels,
+                    )
+            
+            # check if we need to send errors to an API
+            if self.error_server is not None:
+                # only send ERROR to this API
+                self._configure_worker(
+                    logger, self.error_server, message_format, self.error_server_auth, [logging.ERROR]
+                )
 
         self._logger = logger
 
@@ -183,8 +217,13 @@ class Logger(logging.Logger):
             logger.addHandler(handler)
 
     @staticmethod
-    def _configure_listener(logger, message_format, log_folder="_logs", enable_logger_name=True,
-                            enabled_log_levels=[logging.INFO, logging.ERROR]):
+    def _configure_listener(
+        logger,
+        message_format,
+        log_folder="_logs",
+        enable_logger_name=True,
+        enabled_log_levels=[logging.INFO, logging.ERROR],
+    ):
         formatter = logging.Formatter(message_format)
         if enable_logger_name is False:
             # remove logger name from message format
