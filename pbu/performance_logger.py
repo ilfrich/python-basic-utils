@@ -1,8 +1,10 @@
 import uuid
-from statistics import mean
-from time import time
 from datetime import datetime, timedelta
 from logging import Logger
+from statistics import mean
+from time import time
+
+from pbu.date_time import DATETIME_FORMAT
 
 
 class PerformanceLogger:
@@ -34,7 +36,7 @@ class PerformanceLogger:
         if logger is not None:
             logger.info(print_string)
         else:
-            print(print_string)
+            print(f"[{datetime.now().strftime(DATETIME_FORMAT)}] {print_string}")
 
     def get_total_runtime(self) -> timedelta:
         return datetime.now() - self.start_time
