@@ -2,7 +2,7 @@ import inspect
 import math
 import warnings
 from datetime import datetime
-from typing import Callable, Iterable, List, Optional, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -113,7 +113,10 @@ def _calculate_frequency(note, octave):
     return frequency
 
 
-def play_beep(success: bool = True, audio_specs=_DEFAULT_AUDIO_SPEC):
+_TYPE_NOTES = List[Tuple[Optional[str], Optional[int], Optional[float]]]
+
+
+def play_beep(spec: _TYPE_NOTES):
     try:
         from simpleaudio import play_buffer
     except ImportError:
@@ -129,8 +132,6 @@ def play_beep(success: bool = True, audio_specs=_DEFAULT_AUDIO_SPEC):
             sine_list.append(math.sin(2 * math.pi * frequency * (x / _SAMPLE_RATE)))
         return [int(a * _AMP / 2) for a in sine_list]
 
-    spec = audio_specs["success"] if success is True else audio_specs["error"]
-
     for beep in spec:
         note, octave, duration = beep
         freq = _calculate_frequency(note, octave)
@@ -141,9 +142,11 @@ def play_beep(success: bool = True, audio_specs=_DEFAULT_AUDIO_SPEC):
     play_obj.wait_done()
 
 
-def wrap_beep(exec_func: callable, **kwargs):
+def wrap_beep(exec_func: callable, audio_specs: Dict[str, _TYPE_NOTES] = _DEFAULT_AUDIO_SPEC, **kwargs):
     if not isinstance(exec_func, Callable):
         raise ValueError(f"Provided callable {exec_func} ({type(exec_func)}) is not a Callable")
+    if not isinstance(audio_specs, dict):
+        raise ValueError(f"Provided audio_specs {(type(audio_specs))} is not a dictionary")
 
     if "title" in kwargs:
         print_start_script(kwargs["title"])
@@ -168,10 +171,12 @@ def wrap_beep(exec_func: callable, **kwargs):
         from simpleaudio import play_buffer
         try:
             exec_func(**kwargs)
-            play_beep(success=True)
+            success_spec = audio_specs.get("success", _DEFAULT_AUDIO_SPEC["success"])
+            play_beep(success_spec)
             return  # done executing
         except BaseException as be:
-            play_beep(success=False)
+            error_spec = audio_specs.get("error", _DEFAULT_AUDIO_SPEC["error"])
+            play_beep(error_spec)
             raise be
     except ImportError:
         print(_DEFAULT_ERROR_MSG)

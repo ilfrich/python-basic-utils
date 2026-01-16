@@ -732,18 +732,54 @@ wrap_beep(execute_script, title="Script Execution", b=4)  # pass kwargs to execu
 Any argument provided to `wrap_beep` that is not supported by the signature of `execute_script` will be removed/omitted.
 
 > ***IMPORTANT NOTICE***
+>
 > This functionality and the [`play_beep`](#play_beep) functionality require a pip package called `simpleaudio`. Due to
 > its OS requirements, `simpleaudio` is not added to the dependencies of `pbu` and has to be installed manually, in 
 > order to use this functionality.
 > `pip install simpleaudio` adds this support. When not installed, `wrap_beep` will warn the user that the library is 
 > not installed and provide instructions, but still execute the callable.
 > 
-> On MacOS `simpleaudio` seems to install without issues
+> On MacOS `simpleaudio` seems to install without issues (as of January 2026)
 >
 > On Linux, you need the ALSA development packages (audio lib):
 > `sudo dnf install alsa-lib-devel` (Fedora) or `sudo apt install libasound2-dev` (Deb/Ubuntu)
 
-### `print_start_script``
+You can provide a custom dictionary of notes (see [`play_beep`](#play_beep)) for the "success" and "error" and provide 
+them as `audio_specs=` argument to `wrap_beep`. The default looks like this:
+
+```
+_DEFAULT_AUDIO_SPEC = {  # (note, octave duration)
+    "success": [(None, None, 0.2), ("C", 5, 0.4), (None, None, 0.2), ("C", 5, 0.2), (None, None, 0.2), ("G", 5, 1)],
+    "error": [("G", 5, 0.3), (None, None, 0.2), ("C", 5, 1)],
+}
+```
+
+Any key ("success", "error") that is not found in the provided spec (if you override it), will fall-back to the default.
+
+```python
+from pbu import wrap_beep
+
+# plays 2 short beeps for successful execution and the default in case of any errors
+wrap_beep(execute_script, audio_specs={"success": [("C", 5, 0.4), (None, None, 0.2), ("C", 5, 0.4)]})
+```
+
+### `play_beep`
+
+Uses the library `simpleaudio` to play a beep sound. A beep sound is specified by a list of notes (as capital letters). 
+Empty notes are silence added. Notes are: `["C", "C\#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]`.
+A note is specified as a tuple of 3 elements: (note, octave, duration_seconds).
+
+```python
+from pbu import play_beep
+
+music = [("C", 5, 0.5), ("D", 5, 0.2), ("E", 5, 0.2), (None, None, 0.5), ("F", 5, 1.5)]
+play_beep(music)
+```
+
+This creates a sequence of 4 notes with a half a second silence break between note 3 and 4. Octave 4/5 seems to be in 
+line with the regular piano notes range, where most melodies are played.
+
+### `print_start_script`
 
 Used for creating a marker in the terminal that highlights the start of a new script execution.
 
