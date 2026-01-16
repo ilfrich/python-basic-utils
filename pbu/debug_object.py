@@ -1,10 +1,12 @@
 import inspect
 import math
 import warnings
+from datetime import datetime
 from typing import Callable, Iterable, List, Optional, Union
 
 import numpy as np
 
+from pbu.date_time import DATETIME_FORMAT
 from pbu.default_options import list_join
 
 
@@ -49,16 +51,18 @@ def get_coverage_string(covered: Union[int, Iterable], total: Union[int, Iterabl
     return f"{covered} / {total} ({percent}%)"
 
 
-def print_start_script(title: Optional[str] = None) -> None:
+def print_start_script(title: Optional[str] = None, add_datetime: bool = True) -> None:
     if title is None:
         print_start_script("Start Script Execution")
         return
 
+    title_date = title if add_datetime is False else f"{title}: {datetime.now().strftime(DATETIME_FORMAT)}"
+
     buffer = 3
-    dash_line = "".join((len(title) + (2 * buffer)) * ["="])
+    dash_line = "".join((len(title_date) + (2 * buffer)) * ["="])
     buffer_str = "".join(buffer * [" "])
     print(dash_line)
-    print(f"{buffer_str}{title}")
+    print(f"{buffer_str}{title_date}")
     print(dash_line)
 
 
@@ -83,8 +87,8 @@ _DEFAULT_AUDIO_SPEC = {  # note, octave duration
 _SAMPLE_RATE = 44100
 _AMP = 8000.0  # amplitutde
 
-_DEFAULT_ERROR_MSG = ("Could not play beep, because 'beepy' is not installed. 'pip install simpleaudio' will solve "
-                      "this, provided the OS dependency ALSA development packages are installed.")
+_DEFAULT_ERROR_MSG = ("Could not play beep, because 'simpleaudio' is not installed. 'pip install simpleaudio' will "
+                      "solve this, provided the OS dependency ALSA development packages are installed.")
 
 
 def _calculate_frequency(note, octave):

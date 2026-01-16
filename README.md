@@ -28,6 +28,10 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     9. [Datetime Functions](#datetime-functions)
     10. [`weighted_mean`](#weighted_mean)
     11. [`normalise`](#normalise)
+    12. [`wrap_beep`](#wrap_beep)
+    13. [`print_start_script`](#print_start_script)
+    14. [`get_coverage_string`](#get_coverage_string)
+    15. [`get_debug_steps`](#get_debug_steps)
 
 ## Installation
 
@@ -316,7 +320,7 @@ from pbu import PerformanceLogger
 perf = PerformanceLogger()
 perf.start()  # this is optional and will reset the start-time
 # do something useful...
-perf.checkpoint(message="Step 1")  # will print "Step 1 took <timedelta>
+perf.checkpoint(message="Step 1")  # will print "[YYYY-MM-DD HH:MM:SS] Step 1 took <timedelta>
 # some some more useful stuff...
 perf.finish(message="Something useful")  # will print out the whole duration from start to finish
 ```
@@ -345,6 +349,8 @@ perf.finish(message="Total operation", logger=logger)
 - `checkpoint(message=None, logger=None)` - creates a new checkpoint and optionally logs a message
 - `finish(message=None, logger=None)` - prints out the total runtime since `start()` was called or the class was
   initialised
+
+
 
 ### `PerformanceTracker`
 
@@ -694,4 +700,113 @@ from pbu import discretise
 disc1 = discretise(value=4.5, precision=1.0, floor=True)  # 4.0
 disc2 = discretise(value=4.5, precision=0.4, ceil=True)  # 4.8
 disc3 = discretise(value=4.5, precision=0.4)  # 4.6 (assumes mid-point if neither floor nor ceil is set)
+```
+
+### `wrap_beep`
+
+When executing long-running script it can be useful to have a beep play at the end of a script execution. This function
+expects a callable (function definition, lambda) to be passed and will play either a success sound or error sound (if 
+the callable raises an error). Arguments can be passed as named parameters (`kwargs`).
+
+```python
+from pbu import wrap_beep
+
+def execute_script():
+    pass # do your computation here
+
+wrap_beep(execute_script)  # important, don't call the script here, just reference the definition!
+```
+
+Additionally, a `title` argument can be provided, which will print out a debug statement (see 
+[`print_start_script`](#print_start_script)) at the start of the script.
+
+```python
+from pbu import wrap_beep
+
+def execute_script(a=1, b=2):
+    pass # do your computation here
+
+wrap_beep(execute_script, title="Script Execution", b=4)  # pass kwargs to execute_script
+```
+
+Any argument provided to `wrap_beep` that is not supported by the signature of `execute_script` will be removed/omitted.
+
+> ***IMPORTANT NOTICE***
+> This functionality and the [`play_beep`](#play_beep) functionality require a pip package called `simpleaudio`. Due to
+> its OS requirements, `simpleaudio` is not added to the dependencies of `pbu` and has to be installed manually, in 
+> order to use this functionality.
+> `pip install simpleaudio` adds this support. When not installed, `wrap_beep` will warn the user that the library is 
+> not installed and provide instructions, but still execute the callable.
+> 
+> On MacOS `simpleaudio` seems to install without issues
+>
+> On Linux, you need the ALSA development packages (audio lib):
+> `sudo dnf install alsa-lib-devel` (Fedora) or `sudo apt install libasound2-dev` (Deb/Ubuntu)
+
+### `print_start_script``
+
+Used for creating a marker in the terminal that highlights the start of a new script execution.
+
+```python
+from pbu import print_start_script
+
+print_start_script()
+```
+
+Output:
+
+```
+=================================================
+   Start Script Execution: 2026-01-16 12:26:45
+=================================================
+```
+
+You can provide a custom title, which replaces "Start Script Execution" and also control whether or not to add the 
+datetime of the execution:
+
+```python
+from pbu import print_start_script
+
+print_start_script("Model Training", add_datetime=False)
+```
+
+Output:
+
+```
+====================
+   Model Training
+====================
+```
+
+### `get_coverage_string`
+
+Returns a string like "15 / 30 (50.0%)" for a set of given parameters (`covered` and `total`). Both parameters can be 
+either provided as a number (`int`) or an iterable (like a `list`, `set`, `dict`). The precision for the % expression 
+can also be adjusted.
+
+```python
+from pbu import get_coverage_string
+
+print(get_coverage_string(15, 30))  # produces "15 / 30 (50.00%)"
+print(get_coverage_string([1, 2], [3, 4, 5, 6, 7], precision=0))  # produces "2 / 5 (40%)"
+print(get_coverage_string([1, 2], 0, precision=0))  # produces "2 / 0 (n/a)"
+```
+
+
+### `get_debug_steps`
+
+When processing large data sets, it can be advantageous to print out progress statements at certain levels, e.g. every 
+1000 items print out a statement "Processed {n} / {total} items". This function creates the `n` at given percentage 
+steps (e.g. every 10%).
+
+```python
+from pbu import get_debug_steps
+
+items = [0] * 50000  # creates a list with 50000 zeros
+steps = get_debug_steps(items, percentage_step=20)  # default percentage step is 10%
+
+for idx, item in enumerate(items):
+    if idx in steps:
+        # will print out at 10000 / 50000, 20000 / 50000, 30000 / 50000 and 40000 / 50000
+        print(f"Processed {idx} / {len(steps)} items")  
 ```
