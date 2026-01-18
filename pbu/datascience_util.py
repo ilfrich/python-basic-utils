@@ -164,8 +164,9 @@ def sort_grouping(
 ) -> List[Dict[str, Union[Any, int]]]:
     result = []
     for k, v in grouping.items():
-        count = v
+        count = v  # default case, if values are numbers
         if isinstance(v, Iterable):
+            # list provided, either measure the length or call the count exec function on the list
             count = len(v) if count_exec is None else count_exec(v)
         result.append({"key": k, "value": v, count_key: count})
 
