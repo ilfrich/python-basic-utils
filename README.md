@@ -32,6 +32,8 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     13. [`print_start_script`](#print_start_script)
     14. [`get_coverage_string`](#get_coverage_string)
     15. [`get_debug_steps`](#get_debug_steps)
+    16. [`group_objects`](#group_objects)
+    17. [`sort_grouping`](#sort_grouping)
 
 ## Installation
 
@@ -845,4 +847,74 @@ for idx, item in enumerate(items):
     if idx in steps:
         # will print out at 10000 / 50000, 20000 / 50000, 30000 / 50000 and 40000 / 50000
         print(f"Processed {idx} / {len(steps)} items")  
+```
+
+
+### `group_objects`
+
+This function groups a list of objects into a dictionary, where the key is determined by a lambda 
+passed into the function. There is 2 modes this function can operate in:
+
+- Counting items (`count=True`)
+- Listing items (`count=False`)
+
+```python
+from pbu import group_objects
+
+items = [1, 1, 2, 3, 3, 3, 3]
+print(group_objects(items, count=True)) # prints {1: 2, 2: 1, 3: 4}
+print(group_objects(items))  # prints {1: [1, 1], 2: [2], 3: [3, 3, 3, 3]}
+
+items = [{"a": "hello", "b": [0.2, 0.3]}, {"a": "hello", "b": [0.1, 0.7]}, {"a": "world", "b": [0.8, 0.2]}]
+print(group_objects(items, key=lambda e: e["a"], count=True)) # uses key "a" of each item for the grouping
+# prints {"hello": 2, "world": 1}
+```
+
+This is the perfect input structure for [`sort_grouping`](#sort_grouping).
+
+### `sort_grouping`
+
+This function uses a dict and and determines a "total" or "count" for each key, depending on the parameter passed.
+
+```python
+from pbu import sort_grouping
+
+grouping = {"a": 5, "b": 1, "c": 3}
+
+# default is reverse sorting, with "total" as the sorting key
+print(sort_grouping(grouping))  
+# prints [{"key": "a", "value": 5, "total": 5},{"key": c, "value": 3, "total": 3},{"key": "b", "value": 1, "total": 1}]
+
+# reverse sorting and different key for counter
+print(sort_grouping(grouping, reverse=False, count_key="count"))  
+# prints [{"key": "b", "value": 1, "count": 1},{"key": c, "value": 3, "count": 3},{"key": "a", "value": 5, "count": 5}]
+```
+
+You can also provide a `count_exec` (lambda), which determines the counter value for each item in the mapping and work 
+with lists, where the total will be determined by the length of the value.
+
+```python
+from typing import List
+from pbu import sort_grouping
+
+grouping = {
+    "ax": [{"b": 10, "c": 2}, {"b": 40, "c": 4}, {"b": 20, "c": 8}],
+    "ay": [{"b": 20, "c": 2}, {"b": 10, "c": 2}]
+}
+
+print(sort_grouping(grouping))
+# prints: [
+#     {"key": "ax", "value": [{"b": 10, "c": 2}, {"b": 40, "c": 4}, {"b": 20, "c": 8}], "total": 3},
+#     {"key": "ay", "value": [{"b": 20, "c": 2}, {"b": 10, "c": 2}], "total": 2}
+# ]
+
+# declare count exec function (can also do this inline below as a lambda)
+def get_weight(items: List[dict]) -> int:
+    return sum([i["b"] for i in items])  # sum up the "b" values of the list of items
+
+print(sort_grouping(grouping, reverse=True, count_key="weight", count_exec=get_weight))
+# prints: [
+#     {"key": "ay", "value": [{"b": 20, "c": 2}, {"b": 10, "c": 2}], "total": 30}
+#     {"key": "ax", "value": [{"b": 10, "c": 2}, {"b": 40, "c": 4}, {"b": 20, "c": 8}], "total": 70},
+# ]
 ```

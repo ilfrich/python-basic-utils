@@ -1,5 +1,5 @@
-from typing import List, Union, Optional, Tuple
 from statistics import mean
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 
 def weighted_mean(values: List[Union[float, int]], weights: List[Union[int, float]] = []) -> Optional[float]:
@@ -138,3 +138,36 @@ def compute_linear_function_parameters(xy_points: List[tuple]) -> Tuple[float, f
         error += abs(y - ((m * x) + b))
 
     return m, b, error
+
+
+def group_objects(
+    objects: List[Any], key: Optional[callable] = None, count: bool = False
+) -> Dict[Any, Union[List[Any], int]]:
+    result = {}
+    for item in objects:
+        k = item if key is None else key(item)
+        if k not in result:
+            result[k] = 0 if count is True else []
+
+        if count is True:
+            result[k] += 1
+        else:
+            result[k].append(item)
+    return result
+
+
+def sort_grouping(
+    grouping: Dict[Any, Union[int, List[Any]]], 
+    reverse=True, 
+    count_key: str = "total", 
+    count_exec: Optional[callable] = None,
+) -> List[Dict[str, Union[Any, int]]]:
+    result = []
+    for k, v in grouping.items():
+        count = v
+        if isinstance(v, Iterable):
+            count = len(v) if count_exec is None else count_exec(v)
+        result.append({"key": k, "value": v, count_key: count})
+
+    # sorting
+    return list(sorted(result, key=lambda e: e[count_key], reverse=reverse))

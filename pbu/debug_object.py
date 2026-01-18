@@ -80,7 +80,7 @@ def get_debug_steps(total: Union[Iterable, int], percentage_step: int = 10) -> L
 # ##################
 
 
-_DEFAULT_AUDIO_SPEC = {  # note, octave duration
+_DEFAULT_AUDIO_SPEC = {  # (note, octave duration)
     "success": [(None, None, 0.2), ("C", 5, 0.4), (None, None, 0.2), ("C", 5, 0.2), (None, None, 0.2), ("G", 5, 1)],
     "error": [("G", 5, 0.3), (None, None, 0.2), ("C", 5, 1)], 
 }
