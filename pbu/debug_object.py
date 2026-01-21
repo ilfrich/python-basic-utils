@@ -81,8 +81,8 @@ def get_debug_steps(total: Union[Iterable, int], percentage_step: int = 10) -> L
 
 
 _DEFAULT_AUDIO_SPEC = {  # (note, octave duration)
-    "success": [(None, None, 0.2), ("C", 5, 0.4), (None, None, 0.2), ("C", 5, 0.2), (None, None, 0.2), ("G", 5, 1)],
-    "error": [("G", 5, 0.3), (None, None, 0.2), ("C", 5, 1)], 
+    "success": [("F#", 5, 0.2), ("C#", 6, 0.2)],
+    "error": [("C#", 5, 0.2), ("F#", 4, 0.5)],
 }
 _SAMPLE_RATE = 44100
 _AMP = 8000.0  # amplitutde
@@ -116,7 +116,7 @@ def _calculate_frequency(note, octave):
 _TYPE_NOTES = List[Tuple[Optional[str], Optional[int], Optional[float]]]
 
 
-def play_beep(spec: _TYPE_NOTES):
+def play_beep(spec: _TYPE_NOTES, volume: float = 1.0):
     try:
         from simpleaudio import play_buffer
     except ImportError:
@@ -124,13 +124,14 @@ def play_beep(spec: _TYPE_NOTES):
         return
 
     audio = []
+    eff_amp = round(_AMP * volume)
 
     def add_sine(frequency=440, duration=0.5) -> List[float]:
         sine_list = []
         data_size = int(_SAMPLE_RATE * duration)
         for x in range(int(data_size)):
             sine_list.append(math.sin(2 * math.pi * frequency * (x / _SAMPLE_RATE)))
-        return [int(a * _AMP / 2) for a in sine_list]
+        return [int(a * eff_amp / 2) for a in sine_list]
 
     for beep in spec:
         note, octave, duration = beep
@@ -142,7 +143,7 @@ def play_beep(spec: _TYPE_NOTES):
     play_obj.wait_done()
 
 
-def wrap_beep(exec_func: callable, audio_specs: Dict[str, _TYPE_NOTES] = _DEFAULT_AUDIO_SPEC, **kwargs):
+def wrap_beep(exec_func: callable, volume: float = 1.0, audio_specs: Dict[str, _TYPE_NOTES] = _DEFAULT_AUDIO_SPEC, **kwargs):
     if not isinstance(exec_func, Callable):
         raise ValueError(f"Provided callable {exec_func} ({type(exec_func)}) is not a Callable")
     if not isinstance(audio_specs, dict):
@@ -172,11 +173,11 @@ def wrap_beep(exec_func: callable, audio_specs: Dict[str, _TYPE_NOTES] = _DEFAUL
         try:
             exec_func(**kwargs)
             success_spec = audio_specs.get("success", _DEFAULT_AUDIO_SPEC["success"])
-            play_beep(success_spec)
+            play_beep(success_spec, volume)
             return  # done executing
         except BaseException as be:
             error_spec = audio_specs.get("error", _DEFAULT_AUDIO_SPEC["error"])
-            play_beep(error_spec)
+            play_beep(error_spec, volume)
             raise be
     except ImportError:
         print(_DEFAULT_ERROR_MSG)

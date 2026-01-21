@@ -158,7 +158,7 @@ def group_objects(
 
 def sort_grouping(
     grouping: Dict[Any, Union[int, List[Any]]], 
-    reverse=True, 
+    reverse=False, 
     count_key: str = "total", 
     count_exec: Optional[callable] = None,
 ) -> List[Dict[str, Union[Any, int]]]:
