@@ -719,6 +719,8 @@ def execute_script():
 wrap_beep(execute_script)  # important, don't call the script here, just reference the definition!
 ```
 
+The volume can be adjusted by the `volume` argument (as float value between 0 and 1).
+
 Additionally, a `title` argument can be provided, which will print out a debug statement (see 
 [`print_start_script`](#print_start_script)) at the start of the script.
 
@@ -728,7 +730,7 @@ from pbu import wrap_beep
 def execute_script(a=1, b=2):
     pass # do your computation here
 
-wrap_beep(execute_script, title="Script Execution", b=4)  # pass kwargs to execute_script
+wrap_beep(execute_script, volume=0.2, title="Script Execution", b=4)  # pass kwargs to execute_script
 ```
 
 Any argument provided to `wrap_beep` that is not supported by the signature of `execute_script` will be removed/omitted.
@@ -770,12 +772,13 @@ wrap_beep(execute_script, audio_specs={"success": [("C", 5, 0.4), (None, None, 0
 Uses the library `simpleaudio` to play a beep sound. A beep sound is specified by a list of notes (as capital letters). 
 Empty notes are silence added. Notes are: `["C", "C\#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]`.
 A note is specified as a tuple of 3 elements: (note, octave, duration_seconds).
+Additionally the volume can be adjusted (default 1.0), by passing the volume parameter (value between 0 and 1)
 
 ```python
 from pbu import play_beep
 
 music = [("C", 5, 0.5), ("D", 5, 0.2), ("E", 5, 0.2), (None, None, 0.5), ("F", 5, 1.5)]
-play_beep(music)
+play_beep(music, volume=0.5)
 ```
 
 This creates a sequence of 4 notes with a half a second silence break between note 3 and 4. Octave 4/5 seems to be in 
@@ -881,12 +884,12 @@ from pbu import sort_grouping
 
 grouping = {"a": 5, "b": 1, "c": 3}
 
-# default is reverse sorting, with "total" as the sorting key
-print(sort_grouping(grouping))  
+# default is incremental sorting, reverse it (high to low), with "total" as the sorting key
+print(sort_grouping(grouping, reverse=True))  
 # prints [{"key": "a", "value": 5, "total": 5},{"key": c, "value": 3, "total": 3},{"key": "b", "value": 1, "total": 1}]
 
-# reverse sorting and different key for counter
-print(sort_grouping(grouping, reverse=False, count_key="count"))  
+# use incremental sorting and different key for counter
+print(sort_grouping(grouping, count_key="count"))  
 # prints [{"key": "b", "value": 1, "count": 1},{"key": c, "value": 3, "count": 3},{"key": "a", "value": 5, "count": 5}]
 ```
 
