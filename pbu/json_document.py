@@ -1,7 +1,7 @@
 import warnings
-from datetime import datetime, date, time
 from abc import ABC, abstractmethod
-from typing import Optional, List, Dict
+from datetime import date, datetime, time
+from typing import Dict, List, Optional
 
 
 def _handle_value_to_string(value, custom_mapping=None):
@@ -91,7 +91,7 @@ class JsonDocument(ABC):
         custom_mapping = self._get_custom_mapping()
         if attr_mapping is not None:
             for key in attr_mapping:
-                if self.__getattribute__(key) is not None:
+                if hasattr(self, key) and self.__getattribute__(key) is not None:
                     # jsonify value
                     result[attr_mapping[key]] = _handle_value_to_string(self.__getattribute__(key),
                                                                         custom_mapping.get(key, None))
