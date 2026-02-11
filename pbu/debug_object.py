@@ -15,12 +15,12 @@ class DebugObject:
         self._debug = debug
         self._logger = logger
 
-    def debug(self, *kwargs):
+    def debug_log(self, *kwargs):
         if self._debug:
             if self._logger is not None:
                 self._logger.info(list_join(kwargs, " "))
             else:
-                print(*kwargs)
+                print(f"[{self.__class__.__name__}]", *kwargs)
 
 
 def get_coverage_string(covered: Union[int, Iterable], total: Union[int, Iterable], precision: int = 2) -> str:

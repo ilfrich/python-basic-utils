@@ -16,6 +16,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     7. [PerformanceTracker](#performancetracker) - a utility class to track performance of a repeated process 
     8. [BasicConfig](#basicconfig) - application utility class managing access to environment variables
     9. [JsonDocument](#jsondocument) - a class that can serialise/deserialise a dictionary into a class instance
+    10. [DebugObject](#debugobject) - a class that can be inherited to provide debugging features
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
     2. [`json_to_list`](#json_to_list)
@@ -450,6 +451,32 @@ result = os.path.exists(cfg.get_data_directory())
 - `.from_json(json)` - this method has to be implemented by any sub-class and is responsible for
   deserialising a JSON document into an instance of your sub-class. The instance method `extract_system_fields(json)`
   can be used to map most simple attributes - i.e. any attributes provided in the `get_attribute_mapping()` method.
+
+## `DebugObject`
+
+Basic usage:
+
+```python
+from pbu import DebugObject, Logger
+
+class TestOne(DebugObject):
+    def __init__(self):
+        super().__init__(debug=True)
+
+    def some_function(self):
+        # do something
+        self.debug_log("Printing a message")
+
+
+class TestTwo(DebugObject):
+    def __init__(self, debug: bool = True):
+        logger = Logger(self.__class__.__name__)
+        super().__init__(debug=debug, logger=logger)
+
+    def some_function(self):
+        # do something
+        self.debug_log("Using the logger to print this only when TestTwo got initialised with debug=True")
+```
 
 ## Functions
 
