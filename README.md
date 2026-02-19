@@ -33,8 +33,9 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     13. [`print_start_script`](#print_start_script)
     14. [`get_coverage_string`](#get_coverage_string)
     15. [`get_debug_steps`](#get_debug_steps)
-    16. [`group_objects`](#group_objects)
-    17. [`sort_grouping`](#sort_grouping)
+    16. [`pretty_json`](#pretty_json)
+    17. [`group_objects`](#group_objects)
+    18. [`sort_grouping`](#sort_grouping)
 
 ## Installation
 
@@ -879,6 +880,33 @@ for idx, item in enumerate(items):
         print(f"Processed {idx} / {len(steps)} items")  
 ```
 
+### `pretty_json`
+
+When the readability of `print(item)` of a `dict` or `list` is bad, this will just wrap the formatting of the dict/list
+to the `json` lib. This is a one liner:
+
+```python
+from pbu import pretty_json
+
+item = {"a": 1, "b": "Hello", "c": ["a", "b", "c"]}
+print(pretty_json(item))
+```
+
+This will print out:
+
+```json
+{
+  "a": 1,
+  "b": "Hello",
+  "c": [
+    "a",
+    "b",
+    "c"
+  ]
+}
+```
+
+The `pretty_json` also allows to pass the `indent` parameter (number of space indentations)
 
 ### `group_objects`
 

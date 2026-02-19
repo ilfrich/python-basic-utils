@@ -1,4 +1,5 @@
 import inspect
+import json
 import math
 import warnings
 from datetime import datetime
@@ -73,6 +74,10 @@ def get_debug_steps(total: Union[Iterable, int], percentage_step: int = 10) -> L
     total_parsed = total if isinstance(total, int) else len(total)
     perf_steps = [round((pct / 100) * total_parsed) for pct in range(percentage_step, 100, percentage_step)]
     return perf_steps
+
+
+def pretty_json(item: Union[Iterable, dict], indent: int = 2) -> str:
+    return json.dumps(item, indent=indent)
 
 
 # ##################
