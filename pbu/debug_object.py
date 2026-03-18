@@ -6,28 +6,51 @@ from datetime import datetime
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
+import pandas as pd
 
 from pbu.date_time import DATETIME_FORMAT
 from pbu.default_options import list_join
+from pbu.performance_logger import PerformanceLogger
 
 
 class DebugObject:
     def __init__(self, debug=False, logger=None):
         self._debug = debug
         self._logger = logger
+        self._perf_log: Optional[PerformanceLogger] = None
 
     def debug_log(self, *kwargs):
         if self._debug:
             if self._logger is not None:
-                self._logger.info(list_join(kwargs, " "))
+                self._logger.info()
             else:
                 print(f"[{self.__class__.__name__}]", *kwargs)
 
+    def start_perf_log(self) -> None:
+        if self._debug is False:
+            return
+        self._perf_log = PerformanceLogger(logger=self._logger)
 
-def get_coverage_string(covered: Union[int, Iterable], total: Union[int, Iterable], precision: int = 2) -> str:
-    if isinstance(covered, (Iterable)):
+    def perf_log(self, *kwargs, finish: bool = False) -> None:
+        if self._debug is False:
+            return
+        if self._perf_log is None:
+            raise ValueError("Cannot log performance, without the performance logger being initialised.")
+        msg = list_join(kwargs, " ")
+        if finish is False:
+            self._perf_log.checkpoint(msg)
+        else:
+            self._perf_log.finish(msg)
+
+
+def get_coverage_string(
+    covered: Union[int, Iterable, pd.DataFrame, pd.Series], 
+    total: Union[int, Iterable, pd.DataFrame, pd.Series], 
+    precision: int = 2
+) -> str:
+    if isinstance(covered, (Iterable, pd.Series, pd.DataFrame)):
         return get_coverage_string(len(covered), total)
-    if isinstance(total, (Iterable)):
+    if isinstance(total, (Iterable, pd.Series, pd.DataFrame)):
         return get_coverage_string(covered, len(total))
 
     if not isinstance(covered, int) or not isinstance(total, int):

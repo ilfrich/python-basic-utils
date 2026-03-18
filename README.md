@@ -36,10 +36,11 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     16. [`pretty_json`](#pretty_json)
     17. [`group_objects`](#group_objects)
     18. [`sort_grouping`](#sort_grouping)
+    19. [`search_files`](#search_files)
 
 ## Installation
 
-Install via pip:
+Install via pip (at least **Python3.8** required):
 
 ```bash
 pip install pbu
@@ -976,3 +977,32 @@ print(sort_grouping(grouping, reverse=True, count_key="weight", count_exec=get_w
 #     {"key": "ax", "value": [{"b": 10, "c": 2}, {"b": 40, "c": 4}, {"b": 20, "c": 8}], "total": 70},
 # ]
 ```
+
+### `search_files`
+
+This function can search a single directory or multiple directories for files that match certain criteria.
+
+Basic usage:
+
+```python
+from pbu import search_files
+
+
+for file_path in search_files("/directory/to/search", ["budget", "2025"], ext_filter=[".csv"], ignore_folders="_logs"):
+    with open(file_path, "r") as fp:
+        pass  # do something with the file
+```
+
+Parameters: 
+- `search_dirs`: single directory or list of directories
+- `search_tokens`: a single string or list of strings to search for, all search tokens have to be contained within the
+  file name to be returned.
+- `ext_filter`: a string or list of string (or None or empty list) that limits, which file extensions will be searched 
+  for. If no filter is provided (None or empty list), all files matching the search tokens will be returned.
+- `ignore_folders`: an optional string or list of strings representing relative folder names to ignore, e.g. "logs", 
+  "_data" or "_temp"
+- `max_depth`: optional limit on how deep the search should go. If None is provided, the search will recursively search
+  all sub-folders.
+- `ignore_invalid`: a boolean flag that controls the behaviour when `search_dirs` that are provided either don't exist
+  or are not alid directories. If set to True, it will just skip these entries. The default behaviour is to raise a
+  `ValueError`
