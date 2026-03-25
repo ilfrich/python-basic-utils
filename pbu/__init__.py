@@ -14,7 +14,9 @@ from pbu.datascience_util import (
     discretise, 
     compute_linear_function_parameters, 
     group_objects, 
-    sort_grouping
+    sort_grouping,
+    split_into_batches,
+    split_into_size_batches,
 )
 from pbu.app_config import BasicConfig
 from pbu.json_document import JsonDocument, list_to_json, list_from_json

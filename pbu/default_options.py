@@ -1,4 +1,4 @@
-from typing import Any, List, Optional, Callable
+from typing import Any, Callable, List, Optional
 
 
 def default_options(default: dict = {}, override: dict = None, allow_unknown_keys: bool = True) -> dict:

@@ -1,3 +1,4 @@
+from math import floor
 from statistics import mean
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -172,3 +173,62 @@ def sort_grouping(
 
     # sorting
     return list(sorted(result, key=lambda e: e[count_key], reverse=reverse))
+
+
+def split_into_batches(
+    items: Iterable, num_batches: int, consecutive: bool = True,
+) -> List[list]:
+    """
+    Splits the provided list of items into a number of batches. 2 modes are available and exactly one of them has to be
+    set to True. If less items than num_batches are provided, this function will return empty batches. The maximum 
+    difference in items per batch will be 1
+    :param items: the list of items to split up
+    :param num_batches: the number of batches to return, this will determine the length of the return
+    :param consecutive: if set to True, each batch will have items in the same order as they are in items. If set to 
+    False, we iterate through the items and always pick the next batch to put it in.
+    :returns: a list of batches, each batch represented by a list of items (which can be empty)
+    """
+    if num_batches <= 1:
+        num_batches = 1  # force at least one batch
+
+    # init batches
+    batches = {}
+    for i in range(0, num_batches):
+        batches[i] = []
+    if len(items) == 0:
+        # better not risk any issues below
+        return list(batches.values())
+
+    # consecutive
+    if consecutive is True:
+        batch_size = floor(len(items) / num_batches)
+        extras = len(items) - batch_size * num_batches
+        current_start = 0
+        for i in range(0, num_batches):
+            current_size = batch_size if i >= extras else batch_size + 1
+            batches[i] = items[current_start:current_start + current_size]
+            current_start += current_size
+
+    # alternating
+    else:
+        current_idx = 0
+        for item in items:
+            batches[current_idx % num_batches].append(item)
+            current_idx += 1
+
+    return list(batches.values())
+
+
+def split_into_size_batches(items: Iterable, batch_size: int) -> List[list]:
+    if len(items) == 0:
+        return []  # no batches
+    if batch_size < 1:
+        batch_size = 1  # force at least batch size of 1
+
+    batches = []
+    remaining = [i for i in items]
+    while len(remaining) > 0:
+        batches.append(remaining[0:batch_size])
+        remaining = remaining[batch_size:]
+
+    return batches
