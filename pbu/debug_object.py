@@ -22,7 +22,8 @@ class DebugObject:
     def debug_log(self, *kwargs):
         if self._debug:
             if self._logger is not None:
-                self._logger.info()
+                msg = list_join(kwargs, " ")
+                self._logger.info(msg)
             else:
                 print(f"[{self.__class__.__name__}]", *kwargs)
 

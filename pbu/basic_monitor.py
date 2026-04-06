@@ -1,11 +1,12 @@
 import time
-from threading import Event
-from datetime import datetime
-from typing import Optional
 from abc import ABC, abstractmethod
-from pbu.logger import Logger
+from datetime import datetime
+from threading import Event
+from typing import Optional
+
 from pbu.constant_listing import ConstantListing
 from pbu.debug_object import DebugObject
+from pbu.logger import Logger
 
 
 class JobStatus(ConstantListing):
@@ -22,6 +23,7 @@ class JobStatus(ConstantListing):
     PAUSED = "PAUSED"
     RESUMED = "RESUMED"
     RERUN = "RERUN"
+    ABORTED = "ABORTED"
 
 
 class BasicMonitor(ABC, DebugObject):
