@@ -36,7 +36,8 @@ class DebugObject:
         if self._debug is False:
             return
         if self._perf_log is None:
-            raise ValueError("Cannot log performance, without the performance logger being initialised.")
+            self.start_perf_log()
+            self._perf_log.checkpoint("PerformanceLogger was not initialised, ignore this line and next line")
         msg = list_join(kwargs, " ")
         if finish is False:
             self._perf_log.checkpoint(msg)
@@ -172,14 +173,23 @@ def play_beep(spec: _TYPE_NOTES, volume: float = 1.0):
     play_obj.wait_done()
 
 
-def wrap_beep(exec_func: callable, volume: float = 1.0, audio_specs: Dict[str, _TYPE_NOTES] = _DEFAULT_AUDIO_SPEC, **kwargs):
+def wrap_beep(
+    exec_func: callable, 
+    volume: float = 1.0, 
+    audio_specs: Dict[str, _TYPE_NOTES] = _DEFAULT_AUDIO_SPEC, 
+    measure_performance: bool = False, 
+    **kwargs,
+):
     if not isinstance(exec_func, Callable):
         raise ValueError(f"Provided callable {exec_func} ({type(exec_func)}) is not a Callable")
     if not isinstance(audio_specs, dict):
         raise ValueError(f"Provided audio_specs {(type(audio_specs))} is not a dictionary")
 
+    operation_name = "Wrapped Operation"
     if "title" in kwargs:
         print_start_script(kwargs["title"])
+        operation_name = kwargs["title"]
+    perf = None if measure_performance is False else PerformanceLogger()
 
     # clean up kwargs for exec
     sig = inspect.signature(exec_func)
@@ -196,6 +206,10 @@ def wrap_beep(exec_func: callable, volume: float = 1.0, audio_specs: Dict[str, _
     for k in remove_keys:
         del kwargs[k]
 
+    def _perf_finish():
+        if perf is not None and measure_performance is True:
+            perf.finish(operation_name)
+
     try:
         # this ensures we inform the user before the script starts that there's no beep available, if the lib is missing
         from simpleaudio import play_buffer
@@ -203,12 +217,15 @@ def wrap_beep(exec_func: callable, volume: float = 1.0, audio_specs: Dict[str, _
             exec_func(**kwargs)
             success_spec = audio_specs.get("success", _DEFAULT_AUDIO_SPEC["success"])
             play_beep(success_spec, volume)
+            _perf_finish()
             return  # done executing
         except BaseException as be:
             error_spec = audio_specs.get("error", _DEFAULT_AUDIO_SPEC["error"])
             play_beep(error_spec, volume)
+            _perf_finish()
             raise be
     except ImportError:
         print(_DEFAULT_ERROR_MSG)
 
     exec_func(**kwargs)
+    _perf_finish()

@@ -33,11 +33,15 @@ def read_json(path: str) -> Optional[Union[dict, list]]:
     return data
 
 
-def ensure_directory(path: str):
+def ensure_directory(*path: str):
     """
     Makes sure a certain directory exists. If it doesn't exist, the directory will be created.
     :param path: a path reference (absolute or relative) to the directory that should exist.
     """
+    if len(path) == 0:
+        raise ValueError("Please provide a path")
+
+    path = path[0] if len(path) == 1 else os.path.join(*path)
     if not os.path.isdir(path):
         os.makedirs(path)
     return path
@@ -179,3 +183,24 @@ def search_files(
         results.extend(_search_files(folder, tokens, ext, ignore, max_depth, 0))
 
     return results
+
+
+def ensure_ext(file_name: str, extension: str) -> str:
+    """
+    Will make sure that the provided file name has the requested extension. If another extension is provided in the file
+    name, it will be replaced. I.e. if you pass file_name="test.json", extension="csv", you will get "test.csv".
+    :param file_name: the file name to work with, it can have an extension or not. If there is no "." in the file name,
+    the extension will simple be appended. The file name also can be a file path, although be careful with "." in folder
+    names and no extension in the file name.
+    :param extension: the extension that the result should end with. This can be provided with or without the dot (.).
+    :returns: the provided file name with the new extension
+    """
+    if extension.startswith("."):
+        extension = extension[1:]  # remove the . if provided in the extension
+    tokens = file_name.split(".")
+    if len(tokens) == 1:
+        # no extension provided for filename
+        return f"{file_name}.{extension}"
+
+    # extension provided, split it off and concatentate with provided ext
+    return f"{'.'.join(tokens[0:-1])}.{extension}"

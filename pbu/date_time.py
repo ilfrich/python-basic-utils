@@ -1,6 +1,7 @@
-from pytz import timezone, utc, BaseTzInfo
-from datetime import datetime, date, time
-from typing import Union, Optional
+from datetime import date, datetime, time
+from typing import Optional, Union
+
+from pytz import BaseTzInfo, timezone, utc
 
 DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 DATE_FORMAT = "%Y-%m-%d"
@@ -15,6 +16,8 @@ def to_timezone(localized_datetime: datetime, target_timezone: Union[BaseTzInfo,
     timezone object.
     :return: a datetime object in the provided timezone with a different hour value than the input parameter.
     """
+    if localized_datetime is None:
+        return None
     if isinstance(target_timezone, str):
         tz = timezone(target_timezone)
         return to_timezone(localized_datetime, tz)

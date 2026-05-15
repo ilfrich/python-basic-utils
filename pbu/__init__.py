@@ -20,7 +20,15 @@ from pbu.datascience_util import (
 )
 from pbu.app_config import BasicConfig
 from pbu.json_document import JsonDocument, list_to_json, list_from_json
-from pbu.files import write_json, read_json, ensure_directory, convert_to_path, check_filesystem_name, search_files
+from pbu.files import (
+    write_json, 
+    read_json, 
+    ensure_directory, 
+    convert_to_path, 
+    check_filesystem_name, 
+    search_files, 
+    ensure_ext
+)
 from pbu.debug_object import (
     DebugObject, 
     get_coverage_string, 
