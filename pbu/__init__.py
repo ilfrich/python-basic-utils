@@ -11,6 +11,7 @@ from pbu.performance_logger import PerformanceLogger, PerformanceTracker
 from pbu.datascience_util import (
     weighted_mean, 
     normalise, 
+    interpolate,
     discretise, 
     compute_linear_function_parameters, 
     group_objects, 

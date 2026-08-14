@@ -84,6 +84,20 @@ def normalise(value: Union[float, int], min_val: Union[float, int], max_val: Uni
                 (((float(value) - float(mid_point)) / (float(max_value) - float(mid_point))) * 0.5) + 0.5)
 
 
+def interpolate(lower: float, upper: float, x: float = 0) -> float:
+    """
+    Interpolates the value between the lower and the upper value. The x is a value between 0 and 1 (inclusive) that
+    determines how far it has to travel between lower and upper, starting at 0.0 lower and finishing at 1.0 upper.
+    :param lower: the lower bound value
+    :param upper: the upper bound value
+    :param x: the distance [0, 1] to travel from lower towards upper
+    :returns: the value between lower and upper at distance x from lower.
+    """
+    if not 0 <= x <= 1:
+        raise ValueError(f"Provided x has to be within [0, 1], but is {x}")
+    return lower + (upper - lower) * x
+
+
 def discretise(value: Union[float, int], precision: Union[float, int] = 1, floor=False,
                ceil=False) -> Union[float, int]:
     """
