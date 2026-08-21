@@ -1,4 +1,4 @@
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, Iterable, List, Optional
 
 
 def default_options(default: dict = {}, override: dict = None, allow_unknown_keys: bool = True) -> dict:
@@ -104,6 +104,6 @@ def not_none(item_list: List[Any]) -> List[Any]:
     :param item_list: a list of items
     :return: a list of items that are not None
     """
-    if isinstance(item_list, list):
-        return list(filter(lambda x: x is not None, item_list))
-    raise ValueError(f"You can only pass a list to not_none, not {type(item_list)}")
+    if isinstance(item_list, Iterable):
+        return [i for i in item_list if i is not None]
+    raise ValueError(f"You can only pass something iterable to not_none, not {type(item_list)}")
