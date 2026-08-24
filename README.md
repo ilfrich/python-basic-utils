@@ -17,6 +17,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     8. [BasicConfig](#basicconfig) - application utility class managing access to environment variables
     9. [JsonDocument](#jsondocument) - a class that can serialise/deserialise a dictionary into a class instance
     10. [DebugObject](#debugobject) - a class that can be inherited to provide debugging features
+    11. [ParallelExecutor(#parallelexecutor)] - base functionality for parallel bucket-wise ETL and lock handling.
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
     2. [`json_to_list`](#json_to_list)
@@ -479,6 +480,120 @@ class TestTwo(DebugObject):
         # do something
         self.debug_log("Using the logger to print this only when TestTwo got initialised with debug=True")
 ```
+
+## `ParallelExecutor`
+
+This is an abstract class similar to `BasicMonitor`, which provides basic functionality for running parallel ETL
+processes. Python runs on a single core, so sometimes it makes sense for expensive computations across a larger dataset
+where each item needs to be analysed independently to split up the dataset into buckets and then let multiple parallel
+agents execute one split of the dataset. Results can be written with some suffix indicating the bucket it belongs to and
+then an aggregate function can consolidate the individually extracted items.
+
+The idea is that you implement your own class that extends `ParallelExecutor` (example below). And then you can simply
+call your program with a different suffix like 1-8 for 8 threads (`python myscript.py 1`, ..., `python myscript.py 8`).
+The parallel executor does:
+- Splitting items into buckets and distributing them across `n` agents
+- Writing to the same output file (see section Locking below, it's not fully automated)
+- Basic logging (the class is a `DebugObject`)
+
+```python
+import sys
+from pbu import ParallelExecutor
+
+class MyParallelExecutor(ParallelExecutor):
+    def __init__(self, data_folder: str, my_own_param: dict):
+        super().__init__(4)  # 4 threads (num_threads, the 1st param is the only required)
+        self.data_folder = data_folder
+        self.my_own_param = my_own_param
+
+    def extract(self, item) -> None:
+        # do some computation with `item` (read data for a year/month/day and run some computation)
+
+        try:
+            self._acquire_lock()  # acquire the lock (will write the `self.lock_path` (see constructor parameters))
+            # write some result file
+        finally:
+            self._release_lock()  # release the lock, always make sure to call this in a finally block
+
+
+
+    def aggregate(self) -> None:
+        # leave this as 'pass', if you don't need to aggregate written results
+        pass
+
+
+def execute_in_parallel():
+    my_proc = MyParallelExecutor("_data", {"option": "A"})
+    if len(sys.argv) > 1:
+        # thread 1 (1, 2, ... 8) provided
+        years = list(range(2015, 2027, 1))  # create your 'item' list, of items that need to be processed
+        my_proc.parallel_extract(years)
+    else:
+        # when no argument is provided, run the aggregation function
+        my_proc.aggregate()
+
+
+if __name__ == "__main__":
+    execute_in_parallel()  # call if this script is run
+```
+
+If above script is in `my_script.py`, then you can run in parallel terminals:
+
+```
+python my_script.py 1
+python my_script.py 2
+python my_script.py 3
+python my_script.py 4
+```
+
+And this will call the extract function for each thread.
+If you run `python my_script.py` without any argument, it will call the aggregation method.
+
+**Parameters**
+
+- `__init__(num_threads, argv_idx = 1, debug = True, debug_logger = None, lock_path = ".lock")`
+    - `num_threads` - the number of parallel threads you want to run, keep in mind, if you don't start a thread id that
+    items are assigned to, they won't be executed, e.g. you define num_threads=8, but only start script.py 1 to 4
+    - `argv_idx` - the program argument index that contains the thread id, 1 is the first argument after the script path
+    - `debug`, `debug_logger` - see [`DebugObject`](#debugobject)
+    - `lock_path` - the path which to use for the common lock file path, this can be relative or absolute
+- `parallel_extract(items, consecutive = False)`
+    - `items` - the list of all items to be processed. The type depends on your implementation of `extract(item)` it
+    will determine the bucket to execute from these items and then call `sequential_extract` with that list
+    - `consecutive` - a boolean, default `False`, will control how items from the list are assigned to processes.
+    Default is alternating. For some task consecutive can be better (e.g. if you need prior interval data for
+    time-based data). Not all buckets will have the same size (but will be no more than 1 item apart) and if less items
+    than buckets provided, some processes will not have to execute anything. The first bucket is 0 (so you would provide
+    thread IDs 0..7, rather than 1..8)
+- `extract(item)`
+    - `item` - an item from the item list (`items`) of `parallel_extract(..)`
+- `sequential_extract(exec_items)`
+    - `exec_items` - the list of items to execute, no more bucketing happening here
+
+
+A useful bash script (`run_script.sh`) for starting parallel threads can be found here:
+
+```bash
+#!/bin/bash
+
+# $1 = number of processors
+# $2 = script path
+
+set -e
+export PYTHONPATH=$(pwd)
+
+n=$1
+for ((i=1; i<=n; i++)); do
+    python3 $2 $i &
+done
+
+wait
+echo "Execution completed"
+```
+
+Then you can just call `./run_script.sh 8 my_script.py` and it will spin up 8 processes in parallel, each processing a
+given bucket item, or list of bucket items.
+
 
 ## Functions
 

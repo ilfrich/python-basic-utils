@@ -39,3 +39,4 @@ from pbu.debug_object import (
     play_beep, 
     pretty_json
 )
+from pbu.parallel_exec import ParallelExecutor
