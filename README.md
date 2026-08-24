@@ -546,15 +546,17 @@ python my_script.py 3
 python my_script.py 4
 ```
 
-And this will call the extract function for each thread.
+And this will call the extract function for each thread. You can enumerate your threads from 1 to n or from 0 to n-1.
+Internally it uses `thread_id % num_threads` anyway, so `python my_script.py 0` would give you the first bucket.
 If you run `python my_script.py` without any argument, it will call the aggregation method.
+
 
 **Parameters**
 
-- `__init__(num_threads, argv_idx = 1, debug = True, debug_logger = None, lock_path = ".lock")`
+- `__init__(num_threads, argv_idx = -1, debug = True, debug_logger = None, lock_path = ".lock")`
     - `num_threads` - the number of parallel threads you want to run, keep in mind, if you don't start a thread id that
     items are assigned to, they won't be executed, e.g. you define num_threads=8, but only start script.py 1 to 4
-    - `argv_idx` - the program argument index that contains the thread id, 1 is the first argument after the script path
+    - `argv_idx` - the program argument index that contains the thread id, -1 is the last argument
     - `debug`, `debug_logger` - see [`DebugObject`](#debugobject)
     - `lock_path` - the path which to use for the common lock file path, this can be relative or absolute
 - `parallel_extract(items, consecutive = False)`
