@@ -17,7 +17,7 @@ Available on [PyPi](https://pypi.org/project/pbu/)
     8. [BasicConfig](#basicconfig) - application utility class managing access to environment variables
     9. [JsonDocument](#jsondocument) - a class that can serialise/deserialise a dictionary into a class instance
     10. [DebugObject](#debugobject) - a class that can be inherited to provide debugging features
-    11. [ParallelExecutor(#parallelexecutor)] - base functionality for parallel bucket-wise ETL and lock handling.
+    11. [ParallelExecutor](#parallelexecutor) - base functionality for parallel bucket-wise ETL and lock handling.
 4. [Functions](#functions)
     1. [`list_to_json`](#list_to_json)
     2. [`json_to_list`](#json_to_list)
@@ -493,7 +493,7 @@ The idea is that you implement your own class that extends `ParallelExecutor` (e
 call your program with a different suffix like 1-8 for 8 threads (`python myscript.py 1`, ..., `python myscript.py 8`).
 The parallel executor does:
 - Splitting items into buckets and distributing them across `n` agents
-- Writing to the same output file (see section Locking below, it's not fully automated)
+- Writing to the same output file (see .._lock() calls below below, it's not fully automated)
 - Basic logging (the class is a `DebugObject`)
 
 ```python
