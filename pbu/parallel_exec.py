@@ -29,11 +29,10 @@ class ParallelExecutor(ABC, DebugObject):
         self.thread_id = None
 
     @abstractmethod
-    def aggregate(self) -> None:
+    def extract(self, item: Any) -> None:
         pass  # for the user to implement
 
-    @abstractmethod
-    def extract(self, item: Any) -> None:
+    def aggregate(self) -> None:
         pass  # for the user to implement
 
     def debug_log(self, *kwargs):
@@ -42,6 +41,12 @@ class ParallelExecutor(ABC, DebugObject):
             return
         # prepend [0] for thread 0 to every message
         super().debug_log(f"[{self.thread_id}]", *kwargs)
+
+    def perf_log(self, *kwargs, finish: bool = False):
+        if self.thread_id is None:
+            super().perf_log(*kwargs)  # just use regular logging during aggregation
+            return
+        super().perf_log(f"[{self.thread_id}]", *kwargs, finish=finish)
 
     def sequential_extract(self, exec_items: List[Any]):
         """
